@@ -8,8 +8,8 @@
 
 #include "constant.h"
 
-vector<vector<vector<double>>> error(vector<vector<vector<double>>> num, vector<vector<vector<double>>> exact); 	// Standard error
-double maxChange(vector<vector<double>> prev, vector<vector<double>> curr);	// Maxximum change between the previous and current timestep
+vector<vector<double>> error(vector<vector<double>> num, vector<vector<double>> exact); 	// Standard error
+double maxChange(vector<vector<double>> prev, vector<vector<double>> curr);	// Maximum change between the previous and current timestep
 double L2Norm(vector<vector<double>> error);					// L2 Norm of the error
 double L1Norm(vector<vector<double>> error);					// L1 Norm of the error
 double Linf(vector<vector<double>> error);					// L infinite Norm of the error

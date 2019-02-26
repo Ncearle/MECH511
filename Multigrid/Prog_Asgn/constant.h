@@ -28,11 +28,11 @@ extern constexpr double dy = ymax / (jmax - 2);
 
 // extern constexpr double dt = 0.05;
 
-// extern constexpr double tol = pow(10, -9); // Tolerance for max change, "nano"
+extern constexpr double tol = pow(10, -9); // Tolerance for max change, "nano"
 
 // // Constants
-// extern constexpr double pi = M_PI;	// Pi
+extern constexpr double pi = M_PI;	// Pi
 // extern constexpr double Re = 250.0;	// Reynolds number
 // extern constexpr double B = 1.0;	// Beta
-// extern constexpr double w = 1.0;	// Overrelaxation constant
-// extern constexpr int p = 10;		// Precision for printing to console
+extern constexpr double w = 1.0;	// Overrelaxation constant
+extern constexpr int p = 4;		// Precision for printing to console
