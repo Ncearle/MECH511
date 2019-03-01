@@ -139,9 +139,9 @@ int main()
 	vector<vector<double>> Uc = F2C(U);
 	string Cname = "coarse.dat";
 	vec2D2File(Cname, Uc);
-	vector<vector<double>> Uf_int = C2F_int(Uc);
-	string Ftname = "fine_int.dat";
-	vec2D2File(Ftname, Uc);
+	// vector<vector<double>> Uf_int = C2F_int(Uc);
+	// string Ftname = "fine_int.dat";
+	// vec2D2File(Ftname, Uc);
 	// vector<vector<double>> Uf_inj = C2F_inj(Uc);
 	// string Fjname = "fine_inj.dat";
 	// vec2D2File(Fjname, Uc);
