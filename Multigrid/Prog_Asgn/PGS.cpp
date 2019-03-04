@@ -21,14 +21,13 @@ void ghost(vector<vector<double>> &U)
 
 		U[0][i] = sin(pi*x)*sin(pi*(-0.5/jmax-2));
 		U[jmax-1][i] = sin(pi*x)*sin(pi*((jmax-1.5)/jmax-2));
-
 	}
 
 	// Left and Right Ghost Cells
 	for (int j = 1; j < jmax-1; j++)
 	{
 		double y = (j - 0.5) / (jmax - 2);
-		U[j][0] = -U[j][1];		
+		U[j][0] = -U[j][1];
 		U[j][imax-1] = -U[j][imax-2];
 
 		U[j][0] = sin(pi*y)*sin(pi*(-0.5/imax-2));
@@ -69,10 +68,10 @@ vector<vector<double>> F2C(vector<vector<double>> &Uf)
 	return Uc;
 }
 
-// Coarse-to-fine transfer operator by injection
+// // Coarse-to-fine transfer operator by injection
 vector<vector<double>> C2F_inj(vector<vector<double>> &Uc)
 {
-	vector<vector<double>> Uf(Uc.size()*2-2, vector<double>(Uf[0].size()*2-2));
+	vector<vector<double>> Uf(Uc.size()*2-2, vector<double>(Uc[0].size()*2-2));
 	for (int j = 1; j < Uc.size()-1; j++)
 	{
 		for (int i = 1; i < Uc[j].size()-1; i++)
@@ -86,19 +85,19 @@ vector<vector<double>> C2F_inj(vector<vector<double>> &Uc)
 	ghost(Uf);
 	return Uf;
 }
-
-// Coarse-to-fine transfer operator by interpolation
+//
+// // Coarse-to-fine transfer operator by interpolation
 vector<vector<double>> C2F_int(vector<vector<double>> &Uc)
 {
-	vector<vector<double>> Uf(Uc.size()*2-2, vector<double>(Uf[0].size()*2-2));
+	vector<vector<double>> Uf(Uc.size()*2-2, vector<double>(Uc[0].size()*2-2));
 	for (int j = 1; j < Uc.size()-1; j++)
 	{
 		for (int i = 1; i < Uc[j].size()-1; i++)
 		{
-			Uf[j*2][i*2] = (9/16)*Uc[j][i] + (3/16)*Uc[j][i+1] + (3/16)*Uc[j+1][i] + (1/16)*Uc[j+1][i+1];
-			Uf[j*2-1][i*2] = (9/16)*Uc[j][i] + (3/16)*Uc[j][i+1] + (3/16)*Uc[j-1][i] + (1/16)*Uc[j-1][i+1];
-			Uf[j*2][i*2-1] = (9/16)*Uc[j][i] + (3/16)*Uc[j][i-1] + (3/16)*Uc[j+1][i] + (1/16)*Uc[j+1][i-1];
-			Uf[j*2-1][i*2-1] = (9/16)*Uc[j][i] + (3/16)*Uc[j][i-1] + (3/16)*Uc[j-1][i] + (1/16)*Uc[j-1][i-1];
+			Uf[j*2][i*2] = 0.5625*Uc[j][i] + 0.1875*Uc[j][i+1] + 0.1875*Uc[j+1][i] + 0.0625*Uc[j+1][i+1];
+			Uf[j*2-1][i*2] = 0.5625*Uc[j][i] + 0.1875*Uc[j][i+1] + 0.1875*Uc[j-1][i] + 0.0625*Uc[j-1][i+1];
+			Uf[j*2][i*2-1] = 0.5625*Uc[j][i] + 0.1875*Uc[j][i-1] + 0.1875*Uc[j+1][i] + 0.0625*Uc[j+1][i-1];
+			Uf[j*2-1][i*2-1] = 0.5625*Uc[j][i] + 0.1875*Uc[j][i-1] + 0.1875*Uc[j-1][i] + 0.0625*Uc[j-1][i-1];
 		}
 	}
 	ghost(Uf);
@@ -132,17 +131,42 @@ void PGS(vector<vector<double>> &U){
 int main()
 {
 	vector<vector<double>> U(jmax, vector<double>(imax));
+	vector<vector<double>> Ucoarse(jmax/2+1, vector<double>(imax/2+1));
 	init(U);
+	init(Ucoarse);
 	ghost(U);
+	ghost(Ucoarse);
+	vector<vector<double>> Uc = F2C(U);
+	vector<vector<double>> Uf_inj = C2F_inj(Uc);
+	vector<vector<double>> Uf_int = C2F_int(Uc);
+
+	vector<vector<double>> E_coarse = error(Uc, Ucoarse);
+	vector<vector<double>> E_inject = error(Uf_inj, U);
+	vector<vector<double>> E_interp = error(Uf_int, U);
+
+	double L2_coarse = L2Norm(E_coarse);
+	double L2_inject = L2Norm(E_inject);
+	double L2_interp = L2Norm(E_interp);
+
+	cout << "Transferred Coarse grid error: " << L2_coarse << endl;
+	cout << "Transferred Fine Injection grid error: " << L2_inject << endl;
+	cout << "Transferred Fine interpolation grid error: " << L2_interp << endl;
+
 	string OG_name = "original.dat";
 	vec2D2File(OG_name, U);
-	vector<vector<double>> Uc = F2C(U);
+	string OGc_name = "OG_coarse.dat";
+	vec2D2File(OGc_name, Ucoarse);
 	string Cname = "coarse.dat";
 	vec2D2File(Cname, Uc);
-	// vector<vector<double>> Uf_int = C2F_int(Uc);
-	// string Ftname = "fine_int.dat";
-	// vec2D2File(Ftname, Uc);
-	// vector<vector<double>> Uf_inj = C2F_inj(Uc);
-	// string Fjname = "fine_inj.dat";
-	// vec2D2File(Fjname, Uc);
+	string Ftname = "fine_int.dat";
+	vec2D2File(Ftname, Uf_int);
+	string Fjname = "fine_inj.dat";
+	vec2D2File(Fjname, Uf_inj);
+	string ECname = "Ecoarse.dat";
+	vec2D2File(ECname, E_coarse);
+	string Ejname = "Einject.dat";
+	vec2D2File(Ejname, E_inject);
+	string Etname = "Einterp.dat";
+	vec2D2File(Etname, E_interp);
+	return 0;
 }

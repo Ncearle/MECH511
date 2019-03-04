@@ -6,6 +6,7 @@
 #define HEADER_FILE
 #endif // !HEADER_FILE
 
+#include "print_funcs.h"
 #include "constant.h"
 
 vector<vector<double>> error(vector<vector<double>> num, vector<vector<double>> exact); 	// Standard error
@@ -15,31 +16,27 @@ double L1Norm(vector<vector<double>> error);					// L1 Norm of the error
 double Linf(vector<vector<double>> error);					// L infinite Norm of the error
 
 
-vector<vector<vector<double>>> error(vector<vector<vector<double>>> num, vector<vector<vector<double>>> exact)
+vector<vector<double>> error(vector<vector<double>> num, vector<vector<double>> exact)
 {
-	vector<vector<vector<double>>> err(jmax, vector<vector<double>>(imax, vector<double>(3)));
-	for (int k = 0; k < 3; k++)
+	vector<vector<double>> err(num.size(), vector<double>(num[0].size()));
+	for (int j = 1; j < num.size() - 1; j++)
 	{
-		for (int j = 1; j < jmax - 1; j++)
+		for (int i = 1; i < num[0].size() - 1; i++)
 		{
-			for (int i = 1; i < imax - 1; i++)
-			{
-				err[j][i][k] = exact[j][i][k] - num[j][i][k];
-			}
+			err[j][i] = exact[j][i] - num[j][i];
 		}
 	}
 	return err;
 }
 
 // Calculates the maximum change of all cells between iterations given the change matrix
-double maxChange(vector<vector<double>> prev, vector<vector<double>> curr) 
-{			
-
+double maxChange(vector<vector<double>> prev, vector<vector<double>> curr)
+{
 	double maxChange = 0;
-	vector<vector<double>> delta(jmax, vector<double>(imax));
-	for (int j = 1; j < jmax - 1; j++)
+	vector<vector<double>> delta = error(prev, curr);
+	for (int j = 1; j < prev.size() - 1; j++)
 	{
-		for (int i = 1; i < imax - 1; i++)
+		for (int i = 1; i < prev[0].size() - 1; i++)
 		{
 			delta[j][i] = prev[j][i] - curr[j][i];
 			if (abs(delta[j][i]) > maxChange) {
@@ -50,42 +47,38 @@ double maxChange(vector<vector<double>> prev, vector<vector<double>> curr)
 	return maxChange;
 }
 
-vector<double> L2Norm(vector<vector<vector<double>>> error) 
-{			
-	vector<double> sum(3);
-	for (int k = 0; k < 3; k++)
+double L2Norm(vector<vector<double>> error)
+{
+	double L2;
+	for (int j = 1; j < error.size() - 1; j++)
 	{
-		for (int j = 1; j < jmax - 1; j++)
+		for (int i = 1; i < error[0].size() - 1; i++)
 		{
-			for (int i = 1; i < imax - 1; i++)
-			{
-				sum[k] += pow(error[j][i][k], 2);
-			}
+			L2 += pow(error[j][i], 2);
 		}
-		sum[k] = sqrt(sum[k] / ((jmax - 2)*(imax - 2)));
 	}
-	return sum;
+	return sqrt(L2/((error.size() - 2)*(error[0].size() - 2)));
 }
 
 double L1Norm(vector<vector<double>> error)
-{			
-	double sum = 0;
-	for (int j = 1; j < jmax - 1; j++)
+{
+	double L1 = 0;
+	for (int j = 1; j < error.size() - 1; j++)
 	{
-		for (int i = 1; i < imax - 1; i++)
+		for (int i = 1; i < error[0].size() - 1; i++)
 		{
-			sum += abs(error[j][i]);
+			L1 += abs(error[j][i]);
 		}
 	}
-	return sum / ((jmax - 2)*(imax - 2));
+	return L1 / ((error.size() - 2)*(error[0].size() - 2));
 }
 
 double Linf(vector<vector<double>> error)
-{			
+{
 	double Linf = 0;
-	for (int j = 1; j < jmax - 1; j++)
+	for (int j = 1; j < error.size() - 1; j++)
 	{
-		for (int i = 1; i < imax - 1; i++)
+		for (int i = 1; i < error[0].size() - 1; i++)
 		{
 			if (abs(error[j][i]) > Linf)
 			{
