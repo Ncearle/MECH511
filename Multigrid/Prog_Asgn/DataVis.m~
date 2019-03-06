@@ -1,0 +1,124 @@
+%% MECH 511 - Multigrid Programming Assignment
+%% Data Visualisation
+% Nicholas Earle
+
+clear;clc;close all;
+
+%% Part 1
+% Test function: sin(pi*x)*sin(pi*y)
+
+load('original.dat');       % Original grid
+load('OG_coarse.dat');      % Original coarse grid
+load('coarse.dat');         % Transferred Coarse grid
+load('fine_inj.dat');       % Transferred Fine grid by injection
+load('fine_int.dat');       % Transferred Fine grid by interpolation
+load('Ecoarse.dat');        % Coarse grid error
+load('Einject.dat');        % Injection grid error
+load('Einterp.dat');        % Interpolation grid error
+
+original = original(2:end-1, 2:end-1);
+OG_coarse = OG_coarse(2:end-1, 2:end-1);
+coarse = coarse(2:end-1, 2:end-1);
+inject = fine_inj(2:end-1, 2:end-1);
+interp = fine_int(2:end-1, 2:end-1);
+Ecoarse = Ecoarse(2:end-1, 2:end-1);
+Einject = Einject(2:end-1, 2:end-1);
+Einterp = Einterp(2:end-1, 2:end-1);
+
+xy32 = linspace(0,1,32);
+xy64 = linspace(0,1,64);
+
+figure(1);
+imagesc(xy64, xy64, original);
+title('Original Grid');
+xlabel('x'); ylabel('y');
+axis equal tight
+colorbar;
+
+figure(2);
+imagesc(xy32, xy32, coarse);
+title('Coarse Grid');
+xlabel('x'); ylabel('y');
+axis equal tight
+colorbar
+
+figure(3);
+imagesc(xy64, xy64, inject);
+title('Fine Grid by Injection');
+xlabel('x'); ylabel('y');
+axis equal tight
+colorbar;
+
+figure(4);
+imagesc(xy64, xy64, interp);
+title('Fine Grid by Interpolation');
+xlabel('x'); ylabel('y');
+axis equal tight
+colorbar;
+
+figure(5);
+imagesc(xy32, xy32, Ecoarse);
+title('Error in Coarse Grid Transfer, L_2 = 3.0E-4');
+xlabel('x'); ylabel('y');
+axis equal tight
+colorbar;
+
+figure(6);
+imagesc(xy64, xy64, Einject);
+title('Error in Injection Grid Transfer, L_2 = 1.7E-2');
+xlabel('x'); ylabel('y');
+axis equal tight
+colorbar;
+
+figure(7);
+imagesc(xy64, xy64, Einterp);
+title('Error in Interpolation Grid Transfer, L_2 = 1.2E-3');
+xlabel('x'); ylabel('y');
+axis equal tight
+colorbar;
+
+%% Part 3
+
+load('L2_1.dat'); L2_1 = L2_1(2:end);
+load('L2_2.dat'); L2_2 = L2_2(2:end);
+load('L2_3.dat'); L2_3 = L2_3(2:end);
+load('L2_4.dat'); L2_4 = L2_4(2:end);
+load('L2_5.dat'); L2_5 = L2_5(2:end);
+
+figure();
+semilogy(L2_1, 'LineWidth', 1.5);
+hold on;
+semilogy(L2_2, 'LineWidth', 1.5);
+semilogy(L2_3, 'LineWidth', 1.5);
+semilogy(L2_4, 'LineWidth', 1.5);
+semilogy(L2_5, 'LineWidth', 1.5);
+xlabel('Iteration'); ylabel('L_2 Norm');
+title('Convergence Rate for simple V-Cycles');
+ylim([1E-9 1E0]);
+legend('1 Mesh - 8314','2 Meshes - 1386','3 Meshes - 321','4 Meshes - 79','5 Meshes - 20');
+
+%% Part 4
+
+load('L2_w0.500000.dat'); L2_w0.5 = L2_w0.500000(2:end);
+load('L2_w0.600000.dat'); L2_w0.6 = L2_w0.600000(2:end);
+load('L2_w0.666667.dat'); L2_w0.67 = L2_w0.666667(2:end);
+load('L2_w0.800000.dat'); L2_w0.8 = L2_w0.800000(2:end);
+load('L2_w1.000000.dat'); L2_w1.0 = L2_w1.000000(2:end);
+load('L2_w1.250000.dat'); L2_w1.25 = L2_w1.250000(2:end);
+load('L2_w1.500000.dat'); L2_w1.5 = L2_w1.500000(2:end);
+
+figure();
+semilogy(L2_w0.5, 'LineWidth', 1.5);
+hold on;
+semilogy(L2_2, 'LineWidth', 1.5);
+semilogy(L2_3, 'LineWidth', 1.5);
+semilogy(L2_4, 'LineWidth', 1.5);
+semilogy(L2_5, 'LineWidth', 1.5);
+xlabel('Iteration'); ylabel('L_2 Norm');
+title('Convergence Rate for simple V-Cycles');
+ylim([1E-9 1E0]);
+legend('1 Mesh - 8314','2 Meshes - 1386','3 Meshes - 321','4 Meshes - 79','5 Meshes - 20');
+
+
+
+

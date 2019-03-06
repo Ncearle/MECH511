@@ -5,12 +5,15 @@
 #include "constant.h"
 #include "print_funcs.h"
 #include "error_funcs.h"
+#include "vecmat_funcs.h"
 
 // Given domain and velocities, sets and updates the bounary conditions
 void ghost(vector<vector<double>> &U)
 {
 	int jmax = U.size();
 	int imax = U[0].size();
+	double dx = xmax / (imax - 2);
+	double dy = ymax / (jmax - 2);
 
 	// Top and Bottom Ghost Cells
 	for (int i = 1; i < imax-1; i++)
@@ -19,8 +22,6 @@ void ghost(vector<vector<double>> &U)
 		U[0][i] = -U[1][i];
 		U[jmax-1][i] = -U[jmax-2][i];
 
-		U[0][i] = sin(pi*x)*sin(pi*(-0.5/jmax-2));
-		U[jmax-1][i] = sin(pi*x)*sin(pi*((jmax-1.5)/jmax-2));
 	}
 
 	// Left and Right Ghost Cells
@@ -30,8 +31,6 @@ void ghost(vector<vector<double>> &U)
 		U[j][0] = -U[j][1];
 		U[j][imax-1] = -U[j][imax-2];
 
-		U[j][0] = sin(pi*y)*sin(pi*(-0.5/imax-2));
-		U[j][imax-1] = sin(pi*y)*sin(pi*((imax-1.5)/imax-2));
 	}
 }
 
@@ -53,120 +52,233 @@ void init(vector<vector<double>> &U)
 	ghost(U);
 }
 
-// Fine-to-coarse transfer operator
-vector<vector<double>> F2C(vector<vector<double>> &Uf)
+void source(vector<vector<double>> &S)
 {
-	vector<vector<double>> Uc(Uf.size()/2+1, vector<double>(Uf[0].size()/2+1));
+	int jmax = S.size();
+	int imax = S[0].size();
+
+	for (int j = 1; j < jmax - 1; j++)
+	{
+		double y = (j - 0.5) / (jmax - 2);
+		for (int i = 1; i < imax - 1; i++)
+		{
+			double x = (i - 0.5) / (imax - 2);
+			// S[j][i] = 0;
+			S[j][i] = x*(1-x)*y*(1-y);
+		}
+	}
+}
+
+// Fine-to-coarse transfer operator
+// vector<vector<double>> F2C(vector<vector<double>> &Uf)
+void F2C(vector<vector<double>> &U)
+{
+	vector<vector<double>> Uc(U.size()/2+1, vector<double>(U[0].size()/2+1));
 	for (int j = 1; j < Uc.size()-1; j++)
 	{
 		for (int i = 1; i < Uc[j].size()-1; i++)
 		{
-			Uc[j][i] = 0.25 * (Uf[2*j][2*i] + Uf[2*j-1][2*i] + Uf[2*j][2*i-1] + Uf[2*j-1][2*i-1]);
+			Uc[j][i] = 0.25 * (U[2*j][2*i] + U[2*j-1][2*i] + U[2*j][2*i-1] + U[2*j-1][2*i-1]);
 		}
 	}
 	ghost(Uc);
-	return Uc;
+	resizeMat(U, Uc.size(),Uc[0].size());
+	AequalB(U,Uc);
+	// return Uc;
 }
 
 // // Coarse-to-fine transfer operator by injection
-vector<vector<double>> C2F_inj(vector<vector<double>> &Uc)
+// vector<vector<double>> C2F_inject(vector<vector<double>> &Uc)
+void C2F_inject(vector<vector<double>> &U)
 {
-	vector<vector<double>> Uf(Uc.size()*2-2, vector<double>(Uc[0].size()*2-2));
-	for (int j = 1; j < Uc.size()-1; j++)
+	vector<vector<double>> Uf(U.size()*2-2, vector<double>(U[0].size()*2-2));
+	for (int j = 1; j < U.size()-1; j++)
 	{
-		for (int i = 1; i < Uc[j].size()-1; i++)
+		for (int i = 1; i < U[j].size()-1; i++)
 		{
-			Uf[j*2][i*2] = Uc[j][i];
-			Uf[j*2-1][i*2] = Uc[j][i];
-			Uf[j*2][i*2-1] = Uc[j][i];
-			Uf[j*2-1][i*2-1] = Uc[j][i];
+			Uf[j*2][i*2] = U[j][i];
+			Uf[j*2-1][i*2] = U[j][i];
+			Uf[j*2][i*2-1] = U[j][i];
+			Uf[j*2-1][i*2-1] = U[j][i];
 		}
 	}
 	ghost(Uf);
-	return Uf;
+	resizeMat(U, Uf.size(),Uf[0].size());
+	AequalB(U,Uf);
+	// return Uf;
 }
 //
 // // Coarse-to-fine transfer operator by interpolation
-vector<vector<double>> C2F_int(vector<vector<double>> &Uc)
+// vector<vector<double>> C2F_interp(vector<vector<double>> &Uc)
+void C2F_interp(vector<vector<double>> &U)
 {
-	vector<vector<double>> Uf(Uc.size()*2-2, vector<double>(Uc[0].size()*2-2));
-	for (int j = 1; j < Uc.size()-1; j++)
+	vector<vector<double>> Uf(U.size()*2-2, vector<double>(U[0].size()*2-2));
+	for (int j = 1; j < U.size()-1; j++)
 	{
-		for (int i = 1; i < Uc[j].size()-1; i++)
+		for (int i = 1; i < U[j].size()-1; i++)
 		{
-			Uf[j*2][i*2] = 0.5625*Uc[j][i] + 0.1875*Uc[j][i+1] + 0.1875*Uc[j+1][i] + 0.0625*Uc[j+1][i+1];
-			Uf[j*2-1][i*2] = 0.5625*Uc[j][i] + 0.1875*Uc[j][i+1] + 0.1875*Uc[j-1][i] + 0.0625*Uc[j-1][i+1];
-			Uf[j*2][i*2-1] = 0.5625*Uc[j][i] + 0.1875*Uc[j][i-1] + 0.1875*Uc[j+1][i] + 0.0625*Uc[j+1][i-1];
-			Uf[j*2-1][i*2-1] = 0.5625*Uc[j][i] + 0.1875*Uc[j][i-1] + 0.1875*Uc[j-1][i] + 0.0625*Uc[j-1][i-1];
+			Uf[j*2][i*2] = 0.5625*U[j][i] + 0.1875*U[j][i+1] + 0.1875*U[j+1][i] + 0.0625*U[j+1][i+1];
+			Uf[j*2-1][i*2] = 0.5625*U[j][i] + 0.1875*U[j][i+1] + 0.1875*U[j-1][i] + 0.0625*U[j-1][i+1];
+			Uf[j*2][i*2-1] = 0.5625*U[j][i] + 0.1875*U[j][i-1] + 0.1875*U[j+1][i] + 0.0625*U[j+1][i-1];
+			Uf[j*2-1][i*2-1] = 0.5625*U[j][i] + 0.1875*U[j][i-1] + 0.1875*U[j-1][i] + 0.0625*U[j-1][i-1];
 		}
 	}
 	ghost(Uf);
-	return Uf;
+	resizeMat(U, Uf.size(),Uf[0].size());
+	AequalB(U,Uf);
+	// return Uf;
 }
 
 // Point Gauss Seidel with over-relaxation
-void PGS(vector<vector<double>> &U){
-	vector<vector<double>> delta(jmax, vector<double>(imax));
-	double maxDelta = 1.0;
-	int it = 1;
+void PGS(vector<vector<double>> &U, vector<vector<double>> &S, double w)
+{
+	int jmax = U.size();
+	int imax = U[0].size();
+	double dx = xmax / (imax - 2);
+	double dy = ymax / (jmax - 2);
 
-	while (maxDelta > tol) {
+	for (int j = 1; j < jmax - 1; j++)
+	{
 		for (int i = 1; i < imax - 1; i++)
 		{
-			for (int j = 1; j < jmax - 1; j++)
-			{
-				double Uij0 = U[i][j];
-				double Uij = pow(dy,2)/(2*(pow(dx,2)+pow(dy,2))) * (U[i + 1][j] + U[i - 1][j]) + pow(dx, 2) / (2 * (pow(dx, 2) + pow(dy, 2)))* (U[i][j + 1] + U[i][j - 1]) - Uij0;
-
-				U[i][j] = Uij0 + w * Uij;
-				double Uij1 = U[i][j];
-				delta[i][j] = abs(Uij1 - Uij0);
-			}
+			double dUji = pow(dx,2)/(2*(pow(dx,2)+pow(dy,2))) * (U[j + 1][i] + U[j - 1][i]) + pow(dy,2) / (2 * (pow(dx,2) + pow(dy,2))) * (U[j][i + 1] + U[j][i - 1]) - (pow(dx,2)*pow(dy,2))/(2*(pow(dx,2)+pow(dy,2)))*S[j][i] - U[j][i];
+			U[j][i] += w * dUji;
 		}
-		ghost(U);
-		it++;
 	}
+	ghost(U);
+}
+
+vector<double> Vcycle(vector<vector<double>> &U, vector<vector<double>> &S, int nM, int nCI, vector<double> &L2)
+{
+	for (int n = 1; n < nM; n++)
+	{
+		PGS(U,S,w);
+		F2C(U);
+	}
+	for (int n = 1; n < nCI; n++)
+	{
+		PGS(U,S,w);
+	}
+	for (int n = 1; n < nM; n++)
+	{
+		PGS(U,S,w);
+		C2F_interp(U);
+		// C2F_inject(U);
+	}
+	PGS(U,S,w);
+
+	// Second pass
+	// double w2 = 0.8724;
+	// for (int n = 1; n < nM; n++)
+	// {
+	// 	PGS(U,S,w2);
+	// 	F2C(U);
+	// }
+	// for (int n = 1; n < nCI; n++)
+	// {
+	// 	PGS(U,S,w2);
+	// }
+	// for (int n = 1; n < nM; n++)
+	// {
+	// 	PGS(U,S,w2);
+	// 	C2F_interp(U);
+	// 	// C2F_inject(U);
+	// }
+	// PGS(U,S,w2);
+
+	L2.push_back (L2Norm(U));
+	return L2;
 }
 
 int main()
 {
 	vector<vector<double>> U(jmax, vector<double>(imax));
-	vector<vector<double>> Ucoarse(jmax/2+1, vector<double>(imax/2+1));
+	vector<vector<double>> S(jmax, vector<double>(imax));
 	init(U);
-	init(Ucoarse);
-	ghost(U);
-	ghost(Ucoarse);
-	vector<vector<double>> Uc = F2C(U);
-	vector<vector<double>> Uf_inj = C2F_inj(Uc);
-	vector<vector<double>> Uf_int = C2F_int(Uc);
+	source(S);
 
-	vector<vector<double>> E_coarse = error(Uc, Ucoarse);
-	vector<vector<double>> E_inject = error(Uf_inj, U);
-	vector<vector<double>> E_interp = error(Uf_int, U);
+	int it = 0;
+	vector<double> L2 (1, 1.0);
+	int nM = 5;	// Number of mesh levels
 
-	double L2_coarse = L2Norm(E_coarse);
-	double L2_inject = L2Norm(E_inject);
-	double L2_interp = L2Norm(E_interp);
+	while (L2[it] > tol)
+	{
+	  it++;
+		Vcycle(U, S, nM, 2, L2);
+	}
 
-	cout << "Transferred Coarse grid error: " << L2_coarse << endl;
-	cout << "Transferred Fine Injection grid error: " << L2_inject << endl;
-	cout << "Transferred Fine interpolation grid error: " << L2_interp << endl;
+	cout << "Iterations: " << it << endl;
+	cout << "L2 Norm: " << L2[it] << endl;
+	string L2name = "L2_64.dat";
+	vec1D2File(L2name, L2);
 
-	string OG_name = "original.dat";
-	vec2D2File(OG_name, U);
-	string OGc_name = "OG_coarse.dat";
-	vec2D2File(OGc_name, Ucoarse);
-	string Cname = "coarse.dat";
-	vec2D2File(Cname, Uc);
-	string Ftname = "fine_int.dat";
-	vec2D2File(Ftname, Uf_int);
-	string Fjname = "fine_inj.dat";
-	vec2D2File(Fjname, Uf_inj);
-	string ECname = "Ecoarse.dat";
-	vec2D2File(ECname, E_coarse);
-	string Ejname = "Einject.dat";
-	vec2D2File(Ejname, E_inject);
-	string Etname = "Einterp.dat";
-	vec2D2File(Etname, E_interp);
 	return 0;
 }
+
+
+
+
+
+// ==========================
+// Part 1 Code
+// ==========================
+// vector<vector<double>> Ucoarse(jmax/2+1, vector<double>(imax/2+1));
+// init(Ucoarse);
+// ghost(Ucoarse);
+// vector<vector<double>> Uc = F2C(U);
+// vector<vector<double>> Uf_inj = C2F_inject(Uc);
+// vector<vector<double>> Uf_int = C2F_interp(Uc);
+//
+// vector<vector<double>> E_coarse = error(Uc, Ucoarse);
+// vector<vector<double>> E_inject = error(Uf_inj, U);
+// vector<vector<double>> E_interp = error(Uf_int, U);
+//
+// double L2_coarse = L2Norm(E_coarse);
+// double L2_inject = L2Norm(E_inject);
+// double L2_interp = L2Norm(E_interp);
+//
+// cout << "Transferred Coarse grid error: " << L2_coarse << endl;
+// cout << "Transferred Fine Injection grid error: " << L2_inject << endl;
+// cout << "Transferred Fine interpolation grid error: " << L2_interp << endl;
+
+// ----------------------------
+// Printing Grids to data files
+// ----------------------------
+// string OG_name = "data\\original.dat";
+// vec2D2File(OG_name, U);
+// string OGc_name = "data\\OG_coarse.dat";
+// vec2D2File(OGc_name, Ucoarse);
+// string Cname = "data\\coarse.dat";
+// vec2D2File(Cname, Uc);
+// string Ftname = "data\\fine_int.dat";
+// vec2D2File(Ftname, Uf_int);
+// string Fjname = "data\\fine_inj.dat";
+// vec2D2File(Fjname, Uf_inj);
+// string ECname = "data\\Ecoarse.dat";
+// vec2D2File(ECname, E_coarse);
+// string Ejname = "data\\Einject.dat";
+// vec2D2File(Ejname, E_inject);
+// string Etname = "data\\Einterp.dat";
+// vec2D2File(Etname, E_interp);
+
+// =================================
+// Part 2 Code
+// =================================
+// while (L2 > tol)
+// {
+// 	for (int n = 0; n < 5; n++)
+// 	{
+// 		it++;
+// 		PGS(U,S);
+// 		F2C(U);
+// 		for (int n = 0; n < 20; n++)
+// 		{
+// 			// it++;
+// 			PGS(U,S);
+// 		}
+// 		// C2F_inject(U);
+// 		C2F_interp(U);
+// 		PGS(U,S);
+// 		L2 = L2Norm(U);
+// 	}
+// }
