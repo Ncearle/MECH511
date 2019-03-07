@@ -107,6 +107,7 @@ load('Data/L2_w1.000000.dat'); L2_w10 = L2_w1_000000(2:end);
 load('Data/L2_w1.250000.dat'); L2_w125 = L2_w1_250000(2:end);
 load('Data/L2_w1.500000.dat'); L2_w15 = L2_w1_500000(2:end);
 load('Data/L2_double.dat'); L2_double = L2_double(2:end);
+load('Data/L2_doublepass.dat'); L2_doublepass = L2_doublepass(2:end);
 
 figure();
 semilogy(L2_w05, 'LineWidth', 1.5);
@@ -118,12 +119,13 @@ semilogy(L2_w10, 'LineWidth', 1.5);
 semilogy(L2_w125, 'LineWidth', 1.5);
 semilogy(L2_w15, 'LineWidth', 1.5);
 semilogy(L2_double, 'LineWidth', 1.5);
+semilogy(L2_doublepass, 'LineWidth', 1.5);
 xlabel('Iteration'); ylabel('L_2 Norm');
 title('Convergence Rate for a 4-level V-cycle with differing \omega');
 ylim([1E-9 1E0]);
 legend('\omega = 0.5 - 108','\omega = 0.6 - 89','\omega = 0.67 - 79',...
     '\omega = 0.8 - 62','\omega = 1.0 - 44','\omega = 1.25 - 26',...
-    '\omega = 1.5 - 10', 'Double Pass - 36x2=72');
+    '\omega = 1.5 - 10', 'Double Pass - 36x2=72', 'Double Pass - 79');
 
 
 
