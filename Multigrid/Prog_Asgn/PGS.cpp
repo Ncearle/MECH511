@@ -189,7 +189,7 @@ vector<double> Vcycle(vector<vector<double>> &U, vector<vector<double>> &S, int 
 	// PGS(U,S,w2);
 
 	// L2.push_back (L2Norm(U));
-	// return L2;
+	return L2;
 }
 
 int main()
@@ -199,17 +199,17 @@ int main()
 	init(U);
 	source(S);
 
+	vector<vector<double>> Uprev(jmax, vector<double>(imax));
+
 	int it = 0;
 	vector<double> L2 (1, 1.0);
-	int nM = 4;	// Number of mesh levels
-	int nC = 2; // Number of coarsest mesh passes
+	int nM = 8;	// Number of mesh levels
+	int nC = 2; // Number of passes on coarsest mesh
 
 	while (L2[it] > tol)
 	{
 	  it++;
-		vector<vector<double>> Uprev(jmax, vector<double>(imax));
 		AequalB(Uprev, U);
-
 		Vcycle(U, S, nM, nC, L2);
 
 		vector<vector<double>> delta = Msub(U, Uprev);
@@ -218,7 +218,7 @@ int main()
 
 	cout << "Iterations: " << it << endl;
 	cout << "L2 Norm: " << L2[it] << endl;
-	// string L2name = "L2_doublepass.dat";
+	// string L2name = "L2_force_512.dat";
 	// vec1D2File(L2name, L2);
 
 	return 0;

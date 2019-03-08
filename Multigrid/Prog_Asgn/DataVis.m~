@@ -7,14 +7,14 @@ clear;clc;close all;
 %% Part 1
 % Test function: sin(pi*x)*sin(pi*y)
 
-load('original.dat');       % Original grid
-load('OG_coarse.dat');      % Original coarse grid
-load('coarse.dat');         % Transferred Coarse grid
-load('fine_inj.dat');       % Transferred Fine grid by injection
-load('fine_int.dat');       % Transferred Fine grid by interpolation
-load('Ecoarse.dat');        % Coarse grid error
-load('Einject.dat');        % Injection grid error
-load('Einterp.dat');        % Interpolation grid error
+load('Data/original.dat');       % Original grid
+load('Data/OG_coarse.dat');      % Original coarse grid
+load('Data/coarse.dat');         % Transferred Coarse grid
+load('Data/fine_inj.dat');       % Transferred Fine grid by injection
+load('Data/fine_int.dat');       % Transferred Fine grid by interpolation
+load('Data/Ecoarse.dat');        % Coarse grid error
+load('Data/Einject.dat');        % Injection grid error
+load('Data/Einterp.dat');        % Interpolation grid error
 
 original = original(2:end-1, 2:end-1);
 OG_coarse = OG_coarse(2:end-1, 2:end-1);
@@ -58,32 +58,32 @@ colorbar;
 
 figure(5);
 imagesc(xy32, xy32, Ecoarse);
-title('Error in Coarse Grid Transfer, L_2 = 3.0E-4');
+title('Error in Coarse Grid Transfer, L2 = 3.0E-4');
 xlabel('x'); ylabel('y');
 axis equal tight
 colorbar;
 
 figure(6);
 imagesc(xy64, xy64, Einject);
-title('Error in Injection Grid Transfer, L_2 = 1.7E-2');
+title('Error in Injection Grid Transfer, L2 = 1.7E-2');
 xlabel('x'); ylabel('y');
 axis equal tight
 colorbar;
 
 figure(7);
 imagesc(xy64, xy64, Einterp);
-title('Error in Interpolation Grid Transfer, L_2 = 1.2E-3');
+title('Error in Interpolation Grid Transfer, L2 = 1.2E-3');
 xlabel('x'); ylabel('y');
 axis equal tight
 colorbar;
 
 %% Part 3
 
-load('L2_1.dat'); L2_1 = L2_1(2:end);
-load('L2_2.dat'); L2_2 = L2_2(2:end);
-load('L2_3.dat'); L2_3 = L2_3(2:end);
-load('L2_4.dat'); L2_4 = L2_4(2:end);
-load('L2_5.dat'); L2_5 = L2_5(2:end);
+load('Data/L2_1.dat'); L2_1 = L2_1(2:end);
+load('Data/L2_2.dat'); L2_2 = L2_2(2:end);
+load('Data/L2_3.dat'); L2_3 = L2_3(2:end);
+load('Data/L2_4.dat'); L2_4 = L2_4(2:end);
+load('Data/L2_5.dat'); L2_5 = L2_5(2:end);
 
 figure();
 semilogy(L2_1, 'LineWidth', 1.5);
@@ -99,26 +99,52 @@ legend('1 Mesh - 8314','2 Meshes - 1386','3 Meshes - 321','4 Meshes - 79','5 Mes
 
 %% Part 4
 
-load('L2_w0.500000.dat'); L2_w0.5 = L2_w0.500000(2:end);
-load('L2_w0.600000.dat'); L2_w0.6 = L2_w0.600000(2:end);
-load('L2_w0.666667.dat'); L2_w0.67 = L2_w0.666667(2:end);
-load('L2_w0.800000.dat'); L2_w0.8 = L2_w0.800000(2:end);
-load('L2_w1.000000.dat'); L2_w1.0 = L2_w1.000000(2:end);
-load('L2_w1.250000.dat'); L2_w1.25 = L2_w1.250000(2:end);
-load('L2_w1.500000.dat'); L2_w1.5 = L2_w1.500000(2:end);
+load('Data/L2_w0.500000.dat'); L2_w05 = L2_w0_500000(2:end);
+load('Data/L2_w0.600000.dat'); L2_w06 = L2_w0_600000(2:end);
+load('Data/L2_w0.666667.dat'); L2_w067 = L2_w0_666667(2:end);
+load('Data/L2_w0.800000.dat'); L2_w08 = L2_w0_800000(2:end);
+load('Data/L2_w1.000000.dat'); L2_w10 = L2_w1_000000(2:end);
+load('Data/L2_w1.250000.dat'); L2_w125 = L2_w1_250000(2:end);
+load('Data/L2_w1.500000.dat'); L2_w15 = L2_w1_500000(2:end);
+load('Data/L2_double.dat'); L2_double = L2_double(2:end);
+load('Data/L2_doublepass.dat'); L2_doublepass = L2_doublepass(2:end);
 
 figure();
-semilogy(L2_w0.5, 'LineWidth', 1.5);
+semilogy(L2_w05, 'LineWidth', 1.5);
 hold on;
-semilogy(L2_2, 'LineWidth', 1.5);
-semilogy(L2_3, 'LineWidth', 1.5);
-semilogy(L2_4, 'LineWidth', 1.5);
-semilogy(L2_5, 'LineWidth', 1.5);
+semilogy(L2_w06, 'LineWidth', 1.5);
+semilogy(L2_w067, 'LineWidth', 1.5);
+semilogy(L2_w08, 'LineWidth', 1.5);
+semilogy(L2_w10, 'LineWidth', 1.5);
+semilogy(L2_w125, 'LineWidth', 1.5);
+semilogy(L2_w15, 'LineWidth', 1.5);
+semilogy(L2_double, 'LineWidth', 1.5);
+semilogy(L2_doublepass, 'LineWidth', 1.5);
 xlabel('Iteration'); ylabel('L_2 Norm');
-title('Convergence Rate for simple V-Cycles');
+title('Convergence Rate for a 4-level V-cycle with differing \omega');
 ylim([1E-9 1E0]);
-legend('1 Mesh - 8314','2 Meshes - 1386','3 Meshes - 321','4 Meshes - 79','5 Meshes - 20');
+legend('\omega = 0.5 - 108','\omega = 0.6 - 89','\omega = 0.67 - 79',...
+    '\omega = 0.8 - 62','\omega = 1.0 - 44','\omega = 1.25 - 26',...
+    '\omega = 1.5 - 10', 'Double Pass - 36x2=72', 'Double Pass - 79');
 
+%% Part 5
+load('L2_force_16.dat'); L2_force_16 = L2_force_16(2:end);
+load('L2_force_32.dat'); L2_force_32 = L2_force_32(2:end);
+load('L2_force_64.dat'); L2_force_64 = L2_force_64(2:end);
+load('L2_force_128.dat'); L2_force_128 = L2_force_128(2:end);
+load('L2_force_256.dat'); L2_force_256 = L2_force_256(2:end);
+load('L2_force_512.dat'); L2_force_512 = L2_force_512(2:end);
 
+figure();
+semilogy(L2_force_16, 'LineWidth', 1.5);
+hold on;
+semilogy(L2_force_32, 'LineWidth', 1.5);
+semilogy(L2_force_64, 'LineWidth', 1.5);
+semilogy(L2_force_128, 'LineWidth', 1.5);
+semilogy(L2_force_256, 'LineWidth', 1.5);
+semilogy(L2_force_512, 'LineWidth', 1.5);
+xlabel('Iteration'); ylabel('L_2 Norm of Change in Solution');
+title('Convergence Rate for a 4-level V-cycle with differing \omega');
+ylim([1E-9 1E0]);
 
 

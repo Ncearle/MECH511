@@ -127,6 +127,25 @@ legend('\omega = 0.5 - 108','\omega = 0.6 - 89','\omega = 0.67 - 79',...
     '\omega = 0.8 - 62','\omega = 1.0 - 44','\omega = 1.25 - 26',...
     '\omega = 1.5 - 10', 'Double Pass - 36x2=72', 'Double Pass - 79');
 
+%% Part 5
+load('Data/L2_force_16.dat'); L2_force_16 = L2_force_16(2:end);
+load('Data/L2_force_32.dat'); L2_force_32 = L2_force_32(2:end);
+load('Data/L2_force_64.dat'); L2_force_64 = L2_force_64(2:end);
+load('Data/L2_force_128.dat'); L2_force_128 = L2_force_128(2:end);
+load('Data/L2_force_256.dat'); L2_force_256 = L2_force_256(2:end);
+load('Data/L2_force_512.dat'); L2_force_512 = L2_force_512(2:end);
 
+figure();
+semilogy(L2_force_16, 'LineWidth', 1.5);
+hold on;
+semilogy(L2_force_32, 'LineWidth', 1.5);
+semilogy(L2_force_64, 'LineWidth', 1.5);
+semilogy(L2_force_128, 'LineWidth', 1.5);
+semilogy(L2_force_256, 'LineWidth', 1.5);
+semilogy(L2_force_512, 'LineWidth', 1.5);
+xlabel('Iteration'); ylabel('L_2 Norm of Change in Solution');
+title({'Convergence Rate of V-cycle with differing mesh sizes', '(all restricted to 4x4) with a source term'});
+ylim([1E-9 1E0]);
+legend('Dim = 16','Dim = 32','Dim = 64','Dim = 128','Dim = 256','Dim = 512');
 
 
