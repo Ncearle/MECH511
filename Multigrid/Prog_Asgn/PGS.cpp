@@ -162,8 +162,8 @@ vector<double> Vcycle(vector<vector<double>> &U, vector<vector<double>> &S, int 
 	}
 	for (int n = 1; n < nM; n++)
 	{
-		// C2F_interp(U);
-		C2F_inject(U);
+		C2F_interp(U);
+		// C2F_inject(U);
 		PGS(U,S,w);
 		PGS(U,S,w2);
 	}
@@ -203,7 +203,7 @@ int main()
 
 	int it = 0;
 	vector<double> L2 (1, 1.0);
-	int nM = 8;	// Number of mesh levels
+	int nM = 3;	// Number of mesh levels
 	int nC = 2; // Number of passes on coarsest mesh
 
 	while (L2[it] > tol)
@@ -218,8 +218,8 @@ int main()
 
 	cout << "Iterations: " << it << endl;
 	cout << "L2 Norm: " << L2[it] << endl;
-	// string L2name = "L2_force_512.dat";
-	// vec1D2File(L2name, L2);
+	string L2name = "L2_force_16.dat";
+	vec1D2File(L2name, L2);
 
 	return 0;
 }
