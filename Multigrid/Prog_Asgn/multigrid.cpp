@@ -8,7 +8,7 @@
 #include "vecmat_funcs.h"
 
 // Given domain and velocities, sets and updates the bounary conditions
-void ghost(vector<vector<double>> &U)
+void ghost(vector<vector<double> > &U)
 {
 	int jmax = U.size();
 	int imax = U[0].size();
@@ -35,7 +35,7 @@ void ghost(vector<vector<double>> &U)
 }
 
 // Initialize the domain
-void init(vector<vector<double>> &U)
+void init(vector<vector<double> > &U)
 {
 	int jmax = U.size();
 	int imax = U[0].size();
@@ -52,7 +52,7 @@ void init(vector<vector<double>> &U)
 	ghost(U);
 }
 
-void source(vector<vector<double>> &S)
+void source(vector<vector<double> > &S)
 {
 	int jmax = S.size();
 	int imax = S[0].size();
@@ -63,17 +63,17 @@ void source(vector<vector<double>> &S)
 		for (int i = 1; i < imax - 1; i++)
 		{
 			double x = (i - 0.5) / (imax - 2);
-			// S[j][i] = 0;
-			S[j][i] = x*(1-x)*y*(1-y);
+			S[j][i] = 0;
+			// S[j][i] = x*(1-x)*y*(1-y);
 		}
 	}
 }
 
 // Fine-to-coarse transfer operator
 // vector<vector<double>> F2C(vector<vector<double>> &Uf)
-void F2C(vector<vector<double>> &U)
+void F2C(vector<vector<double> > &U)
 {
-	vector<vector<double>> Uc(U.size()/2+1, vector<double>(U[0].size()/2+1));
+	vector<vector<double> > Uc(U.size()/2+1, vector<double>(U[0].size()/2+1));
 	for (int j = 1; j < Uc.size()-1; j++)
 	{
 		for (int i = 1; i < Uc[j].size()-1; i++)
@@ -89,9 +89,9 @@ void F2C(vector<vector<double>> &U)
 
 // // Coarse-to-fine transfer operator by injection
 // vector<vector<double>> C2F_inject(vector<vector<double>> &Uc)
-void C2F_inject(vector<vector<double>> &U)
+void C2F_inject(vector<vector<double> > &U)
 {
-	vector<vector<double>> Uf(U.size()*2-2, vector<double>(U[0].size()*2-2));
+	vector<vector<double> > Uf(U.size()*2-2, vector<double>(U[0].size()*2-2));
 	for (int j = 1; j < U.size()-1; j++)
 	{
 		for (int i = 1; i < U[j].size()-1; i++)
@@ -110,9 +110,9 @@ void C2F_inject(vector<vector<double>> &U)
 //
 // // Coarse-to-fine transfer operator by interpolation
 // vector<vector<double>> C2F_interp(vector<vector<double>> &Uc)
-void C2F_interp(vector<vector<double>> &U)
+void C2F_interp(vector<vector<double> > &U)
 {
-	vector<vector<double>> Uf(U.size()*2-2, vector<double>(U[0].size()*2-2));
+	vector<vector<double> > Uf(U.size()*2-2, vector<double>(U[0].size()*2-2));
 	for (int j = 1; j < U.size()-1; j++)
 	{
 		for (int i = 1; i < U[j].size()-1; i++)
@@ -130,7 +130,7 @@ void C2F_interp(vector<vector<double>> &U)
 }
 
 // Point Gauss Seidel with over-relaxation
-void PGS(vector<vector<double>> &U, vector<vector<double>> &S, double w)
+void PGSpoisson(vector<vector<double> > &U, vector<vector<double> > &S, double w)
 {
 	int jmax = U.size();
 	int imax = U[0].size();
@@ -148,73 +148,84 @@ void PGS(vector<vector<double>> &U, vector<vector<double>> &S, double w)
 	ghost(U);
 }
 
-vector<double> Vcycle(vector<vector<double>> &U, vector<vector<double>> &S, int nM, int nCI, vector<double> &L2)
+vector<vector<double> > residual(vector<vector<double> > &U, vector<vector<double> > &S)
 {
+	vector<vector<double> > R(U.size(), vector<double>(U[0].size()));	// Residual
+	for (int j = 1; j < R.size()-1; j++)
+	{
+		for (int i = 1; i < R[0].size()-1; i++)
+		{
+			R[j][i] = S[j][i] - (U[j-1][i] - 2*U[j][i] + U[j+1][i])/pow(dx,2) - (U[j][i-1] - 2*U[j][i] + U[j][i+1])/pow(dy,2);
+		}
+	}
+	return R;
+}
+
+vector<vector<double> > createMat(int n)
+{
+	vector<vector<double> > Matrix((jmax-2)/n+2, vector<double>((imax-2)/n+2));
+	return Matrix;
+}
+
+vector<double> Vcycle(vector<vector<double> > &U, vector<vector<double> > &S, int nM, int nCI, vector<double> &L2)
+{
+	PGSpoisson(U,S,w);
+	vector<vector<vector<double> > > Utilda(nM, vector<vector<double> >(jmax, vector<double>(imax)));
+	AequalB(U, Utilda[0]);
+	vector<vector<double> > R = residual(U,S);
 	for (int n = 1; n < nM; n++)
 	{
-		PGS(U,S,w);
-		PGS(U,S,w2);
-		F2C(U);
+
+		F2C(R);
 	}
+	vector<vector<double> > E((jmax-2)/pow(2,nM-1)+2, vector<double>((imax-2)/pow(2,nM-1)+2));
 	for (int n = 0; n < nCI; n++)
 	{
-		PGS(U,S,w);
-	}
-	for (int n = 1; n < nM; n++)
-	{
-		C2F_interp(U);
-		// C2F_inject(U);
-		PGS(U,S,w);
-		PGS(U,S,w2);
+		PGSpoisson(E,R,w);
 	}
 
-	// W-cycle?
-	// Second pass
-	// double w2 = 0.8724;
-	// for (int n = 1; n < nM; n++)
-	// {
-	// 	PGS(U,S,w2);
-	// 	F2C(U);
-	// }
-	// for (int n = 1; n < nCI; n++)
-	// {
-	// 	PGS(U,S,w2);
-	// }
-	// for (int n = 1; n < nM; n++)
-	// {
-	// 	PGS(U,S,w2);
-	// 	C2F_interp(U);
-	// 	// C2F_inject(U);
-	// }
-	// PGS(U,S,w2);
+	C2F_interp(E);
+	U = Madd(U,E);
+	PGSpoisson(U,S,w);
 
-	// L2.push_back (L2Norm(U));
+
+	L2.push_back (L2Norm(U));
 	return L2;
 }
 
 int main()
 {
-	vector<vector<double>> U(jmax, vector<double>(imax));
-	vector<vector<double>> S(jmax, vector<double>(imax));
+	vector<vector<double> > U(jmax, vector<double>(imax));
+	vector<vector<double> > S(jmax, vector<double>(imax));
 	init(U);
 	source(S);
 
-	vector<vector<double>> Uprev(jmax, vector<double>(imax));
+	vector<vector<double> > Uprev(jmax, vector<double>(imax));
 
-	int it = 0;
+
 	vector<double> L2 (1, 1.0);
-	int nM = 3;	// Number of mesh levels
-	int nC = 2; // Number of passes on coarsest mesh
+	int it = 0;	// Iterations
+	int nM = 2;	// Number of mesh levels
+	int nCI = 20; // Number of passes on coarsest mesh
 
+	// =================================
+	// Part 2 Code
+	// =================================
 	while (L2[it] > tol)
 	{
-	  it++;
-		AequalB(Uprev, U);
-		Vcycle(U, S, nM, nC, L2);
-
-		vector<vector<double>> delta = Msub(U, Uprev);
-		L2.push_back (L2Norm(delta));
+			it++;
+			Vcycle(U,S,nM,nCI,L2);
 	}
+
+	// while (L2[it] > tol)
+	// {
+	//   it++;
+	// 	AequalB(Uprev, U);
+	// 	Vcycle(U, S, nM, nC, L2);
+	//
+	// 	vector<vector<double>> delta = Msub(U, Uprev);
+	// 	L2.push_back (L2Norm(delta));
+	// }
 
 	cout << "Iterations: " << it << endl;
 	cout << "L2 Norm: " << L2[it] << endl;
@@ -231,16 +242,16 @@ int main()
 // ==========================
 // Part 1 Code
 // ==========================
-// vector<vector<double>> Ucoarse(jmax/2+1, vector<double>(imax/2+1));
+// vector<vector<double> > Ucoarse(jmax/2+1, vector<double>(imax/2+1));
 // init(Ucoarse);
 // ghost(Ucoarse);
-// vector<vector<double>> Uc = F2C(U);
-// vector<vector<double>> Uf_inj = C2F_inject(Uc);
-// vector<vector<double>> Uf_int = C2F_interp(Uc);
+// vector<vector<double> > Uc = F2C(U);
+// vector<vector<double> > Uf_inj = C2F_inject(Uc);
+// vector<vector<double> > Uf_int = C2F_interp(Uc);
 //
-// vector<vector<double>> E_coarse = error(Uc, Ucoarse);
-// vector<vector<double>> E_inject = error(Uf_inj, U);
-// vector<vector<double>> E_interp = error(Uf_int, U);
+// vector<vector<double> > E_coarse = error(Uc, Ucoarse);
+// vector<vector<double> > E_inject = error(Uf_inj, U);
+// vector<vector<double> > E_interp = error(Uf_int, U);
 //
 // double L2_coarse = L2Norm(E_coarse);
 // double L2_inject = L2Norm(E_inject);
@@ -269,25 +280,3 @@ int main()
 // vec2D2File(Ejname, E_inject);
 // string Etname = "data\\Einterp.dat";
 // vec2D2File(Etname, E_interp);
-
-// =================================
-// Part 2 Code
-// =================================
-// while (L2 > tol)
-// {
-// 	for (int n = 0; n < 5; n++)
-// 	{
-// 		it++;
-// 		PGS(U,S);
-// 		F2C(U);
-// 		for (int n = 0; n < 20; n++)
-// 		{
-// 			// it++;
-// 			PGS(U,S);
-// 		}
-// 		// C2F_inject(U);
-// 		C2F_interp(U);
-// 		PGS(U,S);
-// 		L2 = L2Norm(U);
-// 	}
-// }
