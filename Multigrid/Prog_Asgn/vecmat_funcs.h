@@ -9,6 +9,8 @@
 #include "constant.h"
 
 void AequalB(vector<vector<double> > &A, vector<vector<double> > &B);	// Makes A equal to B
+void BequalA(vector<vector<double> > &A, vector<vector<double> > &B);	// Makes A equal to B
+void MatAdd(vector<vector<double> > &A, vector<vector<double> > &B);	// A + B w/ no checks
 void resizeMat(vector<vector<double> > &A, int m, int n); // Resize a matrix to m x n
 vector<vector<double> > Id(int d);	// Identity matrix
 vector<double> MVM(vector<vector<double> > &A, vector<double> &B);	// Matrix vector multiplication
@@ -32,6 +34,30 @@ void AequalB(vector<vector<double> > &A, vector<vector<double> > &B)
 		for (int i = 0; i < A[0].size(); i++)
 		{
 			A[j][i] = B[j][i];
+		}
+	}
+}
+
+void BequalA(vector<vector<double> > &A, vector<vector<double> > &B)
+{
+	for (int j = 0; j < A.size(); j++)
+	{
+		for (int i = 0; i < A[0].size(); i++)
+		{
+			B[j][i] = A[j][i];
+		}
+	}
+}
+
+void MatAdd(vector<vector<double> > &A, vector<vector<double> > &B)
+{
+	int Br = B.size();
+	int Bc = B[0].size();
+	for (int r = 0; r < Br; r++)
+	{
+		for (int c = 0; c < Bc; c++)
+		{
+			A[r][c] += B[r][c];
 		}
 	}
 }

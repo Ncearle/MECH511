@@ -18,8 +18,8 @@
 using namespace std;
 
 // Domain Constants
-extern constexpr int imax = 66;
-extern constexpr int jmax = 66;
+extern constexpr int imax = 18;
+extern constexpr int jmax = 18;
 
 extern constexpr double xmin = 0.0;
 extern constexpr double ymin = 0.0;
