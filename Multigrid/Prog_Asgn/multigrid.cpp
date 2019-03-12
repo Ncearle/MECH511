@@ -247,8 +247,6 @@ int main()
 	init(U);
 	source(S);
 
-	vector<vector<double>> Uprev(jmax, vector<double>(imax));
-
 	int it = 0;
 	vector<double> L2 (1, 1.0);
 	int NMeshes = 4;	// Number of mesh levels
@@ -267,7 +265,7 @@ int main()
 	// 	L2.push_back (L2Norm(U));
 	// }
 
-
+	// vector<vector<double>> Uprev(jmax, vector<double>(imax));
 	// while (L2[it] > tol)
 	// {
 	//   it++;
