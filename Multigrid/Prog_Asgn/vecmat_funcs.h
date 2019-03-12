@@ -10,7 +10,8 @@
 
 void AequalB(vector<vector<double> > &A, vector<vector<double> > &B);	// Makes A equal to B
 void BequalA(vector<vector<double> > &A, vector<vector<double> > &B);	// Makes A equal to B
-void MatAdd(vector<vector<double> > &A, vector<vector<double> > &B);	// A + B w/ no checks
+void MatAddBtoA(vector<vector<double> > &A, vector<vector<double> > &B);	// A + B w/ no checks
+void MatAddAtoB(vector<vector<double> > &A, vector<vector<double> > &B);	// A + B w/ no checks
 void resizeMat(vector<vector<double> > &A, int m, int n); // Resize a matrix to m x n
 vector<vector<double> > Id(int d);	// Identity matrix
 vector<double> MVM(vector<vector<double> > &A, vector<double> &B);	// Matrix vector multiplication
@@ -49,7 +50,7 @@ void BequalA(vector<vector<double> > &A, vector<vector<double> > &B)
 	}
 }
 
-void MatAdd(vector<vector<double> > &A, vector<vector<double> > &B)
+void MatAddBtoA(vector<vector<double> > &A, vector<vector<double> > &B)
 {
 	int Br = B.size();
 	int Bc = B[0].size();
@@ -58,6 +59,19 @@ void MatAdd(vector<vector<double> > &A, vector<vector<double> > &B)
 		for (int c = 0; c < Bc; c++)
 		{
 			A[r][c] += B[r][c];
+		}
+	}
+}
+
+void MatAddAtoB(vector<vector<double> > &A, vector<vector<double> > &B)
+{
+	int Br = B.size();
+	int Bc = B[0].size();
+	for (int r = 0; r < Br; r++)
+	{
+		for (int c = 0; c < Bc; c++)
+		{
+			B[r][c] += A[r][c];
 		}
 	}
 }
