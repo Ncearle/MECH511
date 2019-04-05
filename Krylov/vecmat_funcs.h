@@ -8,45 +8,47 @@
 
 #include "constant.h"
 
-void transpose(vector<vector<double> > &A); // Transposes a matrix
 void swaprow(vector<vector<double> > &A, int i, int j);	// Swaps row a for b
-vector<double> mat2vec(vector<vector<double> > &M);	// Reshapes a matrix into a vector
-vector<vector<double> > vec2mat(vector<double> &V);	// Reshapes a vector into a matrix
-vector<vector<double> > matrixReshape(vector<vector<double> >& nums, int r, int c); // Reshapes a matrix to another dimension
-vector<vector<double> > removeGhost(vector<vector<double> > &M); // Removes ghost cells from a matrix
 void AequalB(vector<vector<double> > &A, vector<vector<double> > &B);	// Makes A equal to B
 void BequalA(vector<vector<double> > &A, vector<vector<double> > &B);	// Makes A equal to B
 void MatAddBtoA(vector<vector<double> > &A, vector<vector<double> > &B);	// A + B w/ no checks
 void MatAddAtoB(vector<vector<double> > &A, vector<vector<double> > &B);	// A + B w/ no checks
 void resizeMat(vector<vector<double> > &A, int m, int n); // Resize a matrix to m x n
-vector<vector<double> > Id(int d);	// Identity matrix
+void LUdecomp(vector<vector<double> > &A, vector<vector<double> > &L, vector<vector<double> > &U); // Factors a Matrix A into lower and upper triangular matrices (L & U) s.t. A=LU
+void invertLowerTri(vector<vector<double> > &L); // Inverts a lower triangular matrix with 1s on diagonal
+void invertUpperTri(vector<vector<double> > &U); // Inverts a lower triangular matrix with 1s on diagonal
+
+double MaxV(vector<double> &V);	// Returns the maximum value of a vector
+double MagV(vector<double> &V);	// Returns the length of a vector
+double dot(vector<double> &a, vector<double> &b); // Returns the dot product of two vectors
+
+vector<double> mat2vec(vector<vector<double> > &M);	// Reshapes a matrix into a vector
+vector<double> residual(vector<vector<double> > &A, vector<double> &x, vector<double> &b); // Returns the residual
 vector<double> MVM(vector<vector<double> > &A, vector<double> &B);	// Matrix vector multiplication
-vector<vector<double> > MM(vector<vector<double> > &A, vector<vector<double> > &B);	// Matrix multiplication
 vector<double> Vadd(vector<double> &A, vector<double> &B);	// Vector Addition
 vector<double> Vsub(vector<double> &A, vector<double> &B);	// Vector Subtraction
+vector<double> ScaV(double S, vector<double> &A);	// Scalar vector multiplication
+vector<double> copyVec(vector<double> &V); // Returns a copy of a matrix
+
+vector<vector<double> > inverse(vector<vector<double> > &A); // Returns the inverse of matrix A
+vector<vector<double> > getDiagInv(vector<vector<double> > &A); // Divides each row by the diagonal entry s.t. A(i,i)=1
+vector<vector<double> > transpose(vector<vector<double> > &A); // Transposes a matrix
+vector<vector<double> > vec2mat(vector<double> &V);	// Reshapes a vector into a matrix
+vector<vector<double> > matrixReshape(vector<vector<double> >& nums, int r, int c); // Reshapes a matrix to another dimension
+vector<vector<double> > removeGhost(vector<vector<double> > &M); // Removes ghost cells from a matrix
+vector<vector<double> > Id(int d);	// Identity matrix
+vector<vector<double> > MM(vector<vector<double> > &A, vector<vector<double> > &B);	// Matrix multiplication
 vector<vector<double> > Madd(vector<vector<double> > &A, vector<vector<double> > &B);	// Matrix addition
 vector<vector<double> > Msub(vector<vector<double> > &A, vector<vector<double> > &B);	// Matrix subtraction
-vector<double> ScaV(double S, vector<double> &A);	// Scalar vector multiplication
 vector<vector<double> > ScaM(double S, vector<vector<double> > &A);	// Scalar matrix multiplication
+vector<vector<double> > copyMat(vector<vector<double> > &A); // Returns a copy of a matrix
+
 vector<vector<vector<double> > > Madd3D(vector<vector<vector<double> > > &A, vector<vector<vector<double> > > &B);	// Matrix addition
 vector<vector<vector<double> > > Msub3D(vector<vector<vector<double> > > &A, vector<vector<vector<double> > > &B);	// Matrix subtraction
 vector<vector<vector<double> > > ScaM3(double S, vector<vector<vector<double> > > &A); // Scaler 3D matrix multiplication
 vector<vector<vector<double> > > copy3(vector<vector<vector<double> > > &A); // Copies a 3D matrix
-vector<vector<double> > copyMat(vector<vector<double> > &A); // Returns a copy of a matrix
-vector<double> copyVec(vector<double> &V); // Returns a copy of a matrix
-double MaxV(vector<double> &A);	// Returns the maximum value of a vector
-
-void transpose(vector<vector<double> > &A){
-
-	vector<vector<double> > temp = copyMat(A);
-	for(int j = 0; j < A.size(); j++)
-	{
-		for(int i = 0; i < A[0].size(); i++)
-		{
-			A[j][i] = temp[i][j];
-		}
-	}
-}
+//==============================================================================
+//==============================================================================
 void swaprow(vector<vector<double> > &A, int a, int b){
 	vector<double> temp = copyVec(A[a]);
 	for (int i = 0; i < A.size(); i++)
@@ -54,62 +56,6 @@ void swaprow(vector<vector<double> > &A, int a, int b){
 			A[a][i] = A[b][i];
 			A[b][i] = temp[i];
 	}
-}
-vector<double> mat2vec(vector<vector<double> > &M) {
-  int x = M.size();
-  int y = M[0].size();
-
-  vector<double> result(x*y);
-  int i = 0;
-  for (int row = 0; row < x; ++ row)
-	{
-    for (int col = 0; col < y; ++ col)
-		{
-      result[i++] = M[row][col];
-    }
-  }
-  return result;
-}
-vector<vector<double> > vec2mat(vector<double> &V){
-	vector<vector<double> > M((jmax-2),vector<double>(imax-2));
-	int k = 0;
-	for (int j = 0; j < (jmax-2); j++)
-	{
-		for (int i = 0; i < (imax-2); i++)
-		{
-			M[j][i] = V[k++];
-		}
-	}
-	return M;
-}
-vector<vector<double>> matrixReshape(vector<vector<double>>& nums, int r, int c) {
-    int x = nums.size();
-    int y = nums[0].size();
-    if (x * y != r * c) {
-        return nums;
-    }
-    vector<vector<double>> result(r, vector<double>(c));
-    int i = 0, j = 0;
-    for (int row = 0; row < x; ++ row) {
-        for (int col = 0; col < y; ++ col) {
-            result[i][j ++] = nums[row][col];
-            if (j >= c) {
-                i ++;
-                j = 0;
-            }
-        }
-    }
-    return result;
-}
-vector<vector<double> > removeGhost(vector<vector<double> > &A){
-	int r = A.size()-2;
-	int c = A[0].size()-2;
-	vector<vector<double> > B((r), vector<double>(c));
-	for (int j = 0; j < r; j++)
-		for (int i = 0; i < c; i++)
-			B[j][i] = A[j+1][i+1];
-
-	return B;
 }
 void AequalB(vector<vector<double> > &A, vector<vector<double> > &B){
 	for (int j = 0; j < A.size(); j++)
@@ -158,13 +104,144 @@ void resizeMat(vector<vector<double> > &A, int m, int n){
 		A[i].resize(n);
 	}
 }
-vector<vector<double> > Id(int d){
-	vector<vector<double> > I(d, vector<double>(d));
-	for (int j = 0; j < d; j++)
+void LUdecomp(vector<vector<double> > &A, vector<vector<double> > &L, vector<vector<double> > &U){
+	int n = A.size();
+	L = Id(n);
+	U = copyMat(A);
+
+	for (int i = 0; i < n-1; i++)
 	{
-		I[j][j] = 1;
+		for (int j = i+1; j < n; j++)
+		{
+			L[j][i] = U[j][i]/U[i][i];
+			for (int k = i; k < n; k++)
+			{
+				U[j][k] -= L[j][i]*U[i][k];
+			}
+		}
 	}
-	return I;
+}
+void invertLowerTri(vector<vector<double> > &L){
+	int n = L.size();
+	for (int i = 1; i < n; i++)
+	{
+		for (int j = 0; j < i; j++)
+		{
+			double sum = 0;
+			for (int k = j; k < i; k++)
+			{
+				sum += L[i][k]*L[k][j];
+			}
+			L[i][j] = -sum;
+		}
+	}
+
+	// for (int i = 0; i < n; i++)
+	// {
+	// 	L[i][i] = 1./L[i][i];
+	// }
+
+	// int d = 1;
+  // for (int i = 1; i < n; i++)
+  // {
+  //   for (int j = i; j < n; j++)
+  //   {
+	// 		double sum = 0.;
+	// 		for (int k = j-d; k < j; k++)
+	// 		{
+	// 			sum += L[j][k]*L[k][j];
+	// 		}
+	// 		L[j][j-d] = -sum*L[j][j];
+  //   }
+  //   d++;
+  // }
+}
+void invertUpperTri(vector<vector<double> > &U){
+	int n = U.size();
+	transpose(U);
+	vector<vector<double> > D = getDiagInv(U);
+	U = MM(D, U);
+	invertLowerTri(U);
+	U = MM(U, D);
+	transpose(U);
+
+
+
+
+
+
+	// vector<vector<double> > Uinv(n, vector<double>(n));
+	// for (int i = 0; i < n; i++)
+	// {
+	// 	Uinv[i][i] = 1./U[i][i];
+	// }
+	// for (int i = 0; i < n-1; i++)
+	// {
+	// 	for (int j = i+1; j < n; j++)
+	// 	{
+	// 		double sum = 0.;
+	// 		for (int k = i; k < j+1; k++)
+	// 		{
+	// 			sum += Uinv[i][k]*U[k][i];
+	// 		}
+	// 		Uinv[i][j] = -sum / U[i][i];
+	// 	}
+	// }
+}
+
+
+double MaxV(vector<double> &V){
+	double M = V[0];
+	for (int i = 0; i < V.size(); i++)
+	{
+		if (V[i] > M)
+		{
+			M = V[i];
+		}
+	}
+	return M;
+}
+double MagV(vector<double> &V){
+	double sum = 0;
+	for (int i = 0; i < V.size(); i++)
+		{
+			sum += V[i]*V[i];
+		}
+	return sqrt(sum);
+}
+double dot(vector<double> &a, vector<double> &b){
+	double sum = 0.;
+	if (a.size() != b.size())
+		cout << "\n!!VECTORS MUST BE THE SAME LENGTH!!\n";
+	else
+	{
+		for (int i = 0; i < a.size(); i++)
+		{
+			sum += a[i] * b[i];
+		}
+	}
+	return sum;
+}
+
+vector<double> mat2vec(vector<vector<double> > &M) {
+  int x = M.size();
+  int y = M[0].size();
+
+  vector<double> result(x*y);
+  int i = 0;
+  for (int row = 0; row < x; ++ row)
+	{
+    for (int col = 0; col < y; ++ col)
+		{
+      result[i++] = M[row][col];
+    }
+  }
+  return result;
+}
+vector<double> residual(vector<vector<double> > &A, vector<double> &x, vector<double> &b){
+	vector<double> Ax = MVM(A, x);
+	vector<double> r = Vsub(b, Ax);
+	return r;
 }
 vector<double> MVM(vector<vector<double> > &A, vector<double> &B){
 	int Ar = A.size();
@@ -188,35 +265,6 @@ vector<double> MVM(vector<vector<double> > &A, vector<double> &B){
 	{
 		cout << "\n!!MULTIPLICATION FAILED -- INNER DIMENSIONS MUST MATCH!!\n";
 	}
-	return C;
-}
-vector<vector<double> > MM(vector<vector<double> > &A, vector<vector<double> > &B){
-	int Ar = A.size();
-	int Ac = A[0].size();
-	int Br = B.size();
-	int Bc = B[0].size();
-	vector<vector<double> > C(Ar, vector<double>(Bc));
-
-	if (Ac == Br)
-	{
-		for (int r = 0; r < Ar; r++)
-		{
-			for (int c = 0; c < Bc; c++)
-			{
-				double sum = 0;
-				for (int i = 0; i < Ac; i++)
-				{
-					sum += A[r][i] * B[i][c];
-				}
-				C[r][c] = sum;
-			}
-		}
-	}
-	else
-	{
-		cout << "\n!!MULTIPLICATION FAILED -- INNER DIMENSIONS MUST MATCH!!\n";
-	}
-
 	return C;
 }
 vector<double> Vadd(vector<double> &A, vector<double> &B){
@@ -251,6 +299,146 @@ vector<double> Vsub(vector<double> &A, vector<double> &B){
 	{
 		cout << "\n!!SUBTRACTION FAILED -- VECTOR DIMENSIONS MUST MATCH!!\n";
 	}
+	return C;
+}
+vector<double> ScaV(double S, vector<double> &A){
+	int Ar = A.size();
+	vector<double> C(Ar);
+
+	for (int r = 0; r < Ar; r++)
+	{
+		C[r] = S * A[r];
+	}
+	return C;
+}
+vector<double> copyVec(vector<double> &V){
+	vector<double> C(V.size());
+	for (int r = 0; r < V.size(); r++)
+	{
+				C[r] = V[r];
+	}
+	return C;
+}
+
+vector<vector<double> > inverseLU(vector<vector<double> > &A){
+	int n = A.size();
+	vector<vector<double> > L(n, vector<double>(n));
+	vector<vector<double> > U(n, vector<double>(n));
+
+	// Decompose A into upper and lower triangular matrices
+	LUdecomp(A, L, U);
+	cout << "U:\n";
+	printVec2D(U);
+	// Solve for inverse of L
+	invertLowerTri(L);
+	// Solve for inverse of U
+	invertUpperTri(U);
+
+	cout << "Uinv:\n";
+	printVec2D(U);
+
+
+
+	return U;
+}
+vector<vector<double> > getDiagInv(vector<vector<double> > &A){
+	int n = A.size();
+	vector<vector<double> > D = Id(n);
+	for (int i = 0; i < n; i++)
+	{
+			D[i][i] /= A[i][i];
+	}
+	return D;
+}
+vector<vector<double> > transpose(vector<vector<double> > &A){
+	int rows = A.size();
+	int cols = A[0].size();
+	vector<vector<double> > Atranspose(cols, vector<double>(rows));
+	for(int j = 0; j < rows; j++)
+	{
+		for(int i = 0; i < cols; i++)
+		{
+			Atranspose[j][i] = A[i][j];
+		}
+	}
+	return Atranspose;
+}
+vector<vector<double> > vec2mat(vector<double> &V){
+	vector<vector<double> > M((jmax-2),vector<double>(imax-2));
+	int k = 0;
+	for (int j = 0; j < (jmax-2); j++)
+	{
+		for (int i = 0; i < (imax-2); i++)
+		{
+			M[j][i] = V[k++];
+		}
+	}
+	return M;
+}
+vector<vector<double> > matrixReshape(vector<vector<double>>& nums, int r, int c) {
+    int x = nums.size();
+    int y = nums[0].size();
+    if (x * y != r * c) {
+        return nums;
+    }
+    vector<vector<double>> result(r, vector<double>(c));
+    int i = 0, j = 0;
+    for (int row = 0; row < x; ++ row) {
+        for (int col = 0; col < y; ++ col) {
+            result[i][j ++] = nums[row][col];
+            if (j >= c) {
+                i ++;
+                j = 0;
+            }
+        }
+    }
+    return result;
+}
+vector<vector<double> > removeGhost(vector<vector<double> > &A){
+	int r = A.size()-2;
+	int c = A[0].size()-2;
+	vector<vector<double> > B((r), vector<double>(c));
+	for (int j = 0; j < r; j++)
+		for (int i = 0; i < c; i++)
+			B[j][i] = A[j+1][i+1];
+
+	return B;
+}
+vector<vector<double> > Id(int d){
+	vector<vector<double> > I(d, vector<double>(d));
+	for (int j = 0; j < d; j++)
+	{
+		I[j][j] = 1;
+	}
+	return I;
+}
+vector<vector<double> > MM(vector<vector<double> > &A, vector<vector<double> > &B){
+	int Ar = A.size();
+	int Ac = A[0].size();
+	int Br = B.size();
+	int Bc = B[0].size();
+	vector<vector<double> > C(Ar, vector<double>(Bc));
+
+	if (Ac == Br)
+	{
+		for (int r = 0; r < Ar; r++)
+		{
+			for (int c = 0; c < Bc; c++)
+			{
+				double sum = 0;
+				for (int i = 0; i < Ac; i++)
+				{
+					sum += A[r][i] * B[i][c];
+				}
+				C[r][c] = sum;
+			}
+		}
+	}
+	else
+	{
+		cout << "\n!!MULTIPLICATION FAILED -- INNER DIMENSIONS MUST MATCH!!\n";
+	}
+
 	return C;
 }
 vector<vector<double> > Madd(vector<vector<double> > &A, vector<vector<double> > &B){
@@ -299,16 +487,6 @@ vector<vector<double> > Msub(vector<vector<double> > &A, vector<vector<double> >
 	}
 	return C;
 }
-vector<double> ScaV(double S, vector<double> &A){
-	int Ar = A.size();
-	vector<double> C(Ar);
-
-	for (int r = 0; r < Ar; r++)
-	{
-		C[r] = S * A[r];
-	}
-	return C;
-}
 vector<vector<double> > ScaM(double S, vector<vector<double> > &A){
 	int Ar = A.size();
 	int Ac = A[0].size();
@@ -323,6 +501,21 @@ vector<vector<double> > ScaM(double S, vector<vector<double> > &A){
 	}
 	return C;
 }
+vector<vector<double> > copyMat(vector<vector<double> > &A){
+	int Ar = A.size();
+	int Ac = A[0].size();
+
+	vector<vector<double> > C(Ar, vector<double>(Ac));
+	for (int r = 0; r < Ar; r++)
+	{
+		for (int c = 0; c < Ac; c++)
+		{
+				C[r][c] = A[r][c];
+		}
+	}
+	return C;
+}
+
 vector<vector<vector<double> > > Madd3D(vector<vector<vector<double> > > &A, vector<vector<vector<double> > > &B){
 	int Ar = A.size();
 	int Ac = A[0].size();
@@ -414,37 +607,4 @@ vector<vector<vector<double> > > copy3(vector<vector<vector<double> > > &A){
 		}
 	}
 	return C;
-}
-vector<vector<double> > copyMat(vector<vector<double> > &A){
-	int Ar = A.size();
-	int Ac = A[0].size();
-
-	vector<vector<double> > C(Ar, vector<double>(Ac));
-	for (int r = 0; r < Ar; r++)
-	{
-		for (int c = 0; c < Ac; c++)
-		{
-				C[r][c] = A[r][c];
-		}
-	}
-	return C;
-}
-vector<double> copyVec(vector<double> &V){
-	vector<double> C(V.size());
-	for (int r = 0; r < V.size(); r++)
-	{
-				C[r] = V[r];
-	}
-	return C;
-}
-double MaxV(vector<double> &A){
-	double M = A[0];
-	for (int i = 0; i < A.size(); i++)
-	{
-		if (A[i] > M)
-		{
-			M = A[i];
-		}
-	}
-	return M;
 }

@@ -302,8 +302,8 @@ vector<double> Cholesky(vector<vector<double> > &A, vector<double> &b)
 	}
 
 	vector<double> y = forSub(L, b);
-	transpose(L);
-	vector<double> x = backSub(L, y);
+	vector<vector<double> > Lstar = transpose(L);
+	vector<double> x = backSub(Lstar, y);
 	return x;
 }
 
@@ -399,6 +399,15 @@ vector<vector<double> > AppFac(vector<vector<double> > &T, vector<vector<double>
 			deltaT[i] = Tty;
 		}
 	return deltaT;
+}
+
+// GMRES
+vector<double> GMRES(vector<vector<double> > &A, vector<double> &b)
+{
+	vector<double> x0(b.size());	// Initial guess (zero vector)
+	vector<double> r0 = residual(A, x0, b);
+	double len_r0 = lenV(R0);
+	vector<double> v1 = ScaV(1/len_r0, r0);
 }
 
 int main()
