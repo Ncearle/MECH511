@@ -22,8 +22,8 @@ using namespace std;
 using namespace xt;
 
 // Domain Constants
-extern constexpr int imax = 42;
-extern constexpr int jmax = 22;
+extern constexpr int imax = 22;
+extern constexpr int jmax = 12;
 
 extern constexpr double xmax = 40.;
 extern constexpr double ymax = 1.;

@@ -218,16 +218,14 @@ void RK2(vector<vector<double> > &T, vector<vector<double> > &u, vector<vector<d
 //=================
 // Implicit Schemes
 //=================
-
 vector<vector<double> > assembleLHS(vector<vector<double> > &T, vector<vector<double> > &u, vector<vector<double> > &v)
 {
-	vector<vector<double> > LHS((imax-2)*(jmax-2), vector<double>((imax-2)*(jmax-2)));
+	int dim = (imax-2)*(jmax-2);
+	vector<vector<double> > LHS(dim, vector<double>(dim));
 	vector<vector<double> > u_nogho = removeGhost(u);
 	vector<vector<double> > v_nogho = removeGhost(v);
 	vector<double> u_vec = mat2vec(u_nogho);
 	vector<double> v_vec = mat2vec(v_nogho);
-
-	int dim = LHS.size();
 
 	double ax = dt / (Re*Pr*pow(dx, 2));
 	double bx = dt / (2. * dx);
@@ -280,7 +278,7 @@ vector<double> LU(vector<vector<double> > &A, vector<double> &b)
 	vector<double> x = backSub(U, y);
 	return x;
 }
-
+// Cholesky Factorisation
 vector<double> Cholesky(vector<vector<double> > &A, vector<double> &b)
 {
 	int n = A.size();
@@ -306,7 +304,6 @@ vector<double> Cholesky(vector<vector<double> > &A, vector<double> &b)
 	vector<double> x = backSub(Lstar, y);
 	return x;
 }
-
 // LU Factorisation with Partial Pivoting
 vector<double> LUpivot(vector<vector<double> > &A, vector<double> &b)
 {
@@ -339,7 +336,6 @@ vector<double> LUpivot(vector<vector<double> > &A, vector<double> &b)
 	vector<double> x = backSub(U, y);
 	return x;
 }
-
 // Approximate Factorisation
 vector<vector<double> > AppFac(vector<vector<double> > &T, vector<vector<double> > &u, vector<vector<double> > &v, vector<vector<double> > &S, vector<vector<double> >FI)
 {
@@ -400,85 +396,145 @@ vector<vector<double> > AppFac(vector<vector<double> > &T, vector<vector<double>
 		}
 	return deltaT;
 }
-
+// Least Squares solve
+vector<double> leastSquares(vector<vector<double> > &A, vector<double> &b)
+{
+  int n = b.size();
+  vector<vector<double> > Atran = transpose(A);
+  vector<vector<double> > Asquare = MM(Atran, A);
+  vector<double> bsquare = MVM(Atran, b);
+  vector<double> x = LU(Asquare, bsquare);
+  return x;
+}
 // GMRES
 vector<double> GMRES(vector<vector<double> > &A, vector<double> &b)
 {
-	vector<double> x0(b.size());	// Initial guess (zero vector)
+  int n = b.size();
+  vector<double> x0(n);	// Initial guess (zero vector)
 	vector<double> r0 = residual(A, x0, b);
-	double len_r0 = lenV(R0);
-	vector<double> v1 = ScaV(1/len_r0, r0);
-}
+  vector<double> res = {MagV(r0)};
+	vector<vector<double> > v;
+  v.push_back (ScaV(1/res[0], r0));
 
+  vector<double> Be1 = {res[0]};
+  vector<vector<double> > H;
+
+  int j = 0;
+  cout << "GMRES: Iteration: " << j << "\t|\tResidual: " << res[0] << endl;
+  while (res[j] > tol && j < n)
+  {
+    resizeMat(H, j+2, j+1);
+    vector<double> w = MVM(A, v[j]);
+    vector<double> wdiff(n);
+    for (int i = 0; i <= j; i++)
+    {
+      H[i][j] = dot(w, v[i]);
+      wdiff = ScaV(H[i][j], v[i]);
+      w = Vsub(w, wdiff);
+    }
+    H[j+1][j] = MagV(w);
+    Be1.push_back (0.);
+    vector<double> y = leastSquares(H, Be1);
+    v = transpose(v);
+    vector<double> u = MVM(v, y);
+    v = transpose(v);
+    v.push_back (ScaV(1/H[j+1][j], w));
+
+    zeroVec(x0);
+    x0 = Vadd(x0, u);
+    r0 = residual(A, x0, b);
+    res.push_back (MagV(r0));
+    j++;
+    cout << "GMRES: Iteration: " << j << "\t|\tResidual: " << res[j] << endl;
+  }
+  return x0;
+}
 int main()
 {
-	int start_s=clock();
+	int time=clock();
 	vector<vector<double> > T(jmax, vector<double>(imax));
 	vector<vector<double> > u(jmax, vector<double>(imax));
 	vector<vector<double> > v(jmax, vector<double>(imax));
 	init(T, u, v);
 	vector<vector<double> > S = source(u,v);	// Source Term
 	vector<vector<double> > T0 = copyMat(T);	// Initial
-
-	int it = 0;
-	double delta = 1.0;
-	while (abs(delta) > tol)
-	{
-		it++;
-		vector<vector<double> > FI = FI2C(T, u, v, S);	// Only changes on every time loop
-
-		vector<vector<double> >deltaT = AppFac(T, u, v, S, FI);
-		// RK2(T, u, v);
-		// EE(T, u, v);
-		for (int j = 1; j < jmax-1; j++)
-		{
-			for (int i = 1; i < imax-1; i++)
-			{
-				T[j][i] += deltaT[i][j];
-			}
-		}
-
-		// vector<vector<double> > A = assembleLHS(T,u,v);
-		// vector<vector<double> > FI_nogho = removeGhost(FI);
-		// vector<double> b = mat2vec(FI_nogho);
-		// b = ScaV(dt, b);
-		// // vector<double> x = LU(A, b);
-		// // printVec(x);
-		// vector<double> x = Cholesky(A, b);
-		// // printVec(c);
-		// // vector<double> x = LUpivot(A, b);
-		// // printVec(p);
-		//
-		// vector<vector<double> >deltaT = vec2mat(x);
-		// for (int j = 0; j < jmax-2; j++)
-		// {
-		// 	for (int i = 0; i < imax-2; i++)
-		// 	{
-		// 		T[j+1][i+1] += deltaT[j][i];
-		// 	}
-		// }
+	vector<vector<double> > A = assembleLHS(T,u,v);
+	vector<vector<double> > FI = FI2C(T, u, v, S);	// Only changes on every time loop
+	vector<vector<double> > FI_nogho = removeGhost(FI);
+	vector<double> b = mat2vec(FI_nogho);
 
 
-		ghost(T, u, v);
+	vector<vector<double> > x = AppFac(T, u, v, S, FI);
+	// vector<vector<double> > sol = vec2mat(x);
+	printVec2D(x);
 
-		delta = maxChange(T0, T);
-		T0 = copyMat(T);
-	}
-
-	vector<vector<double> > ExT = exactTemp();
-	cout << setprecision(6) << delta << endl;
-	vector<vector<double> > err = error(T, ExT);
-	double L2 = L2Norm(err);
-	cout << setprecision(6) << "L2 norm: " << L2 << endl;
-	cout << "Iterations: " << it << endl;
-	cout << "Timestep: " << dt << endl;
-
-	int stop_s=clock();
+	time = clock() - time;
 	cout << "Domain size: " << (imax-2) << " X " << (jmax-2) << endl;
-	cout << "time [sec]: " << (stop_s-start_s)/double(CLOCKS_PER_SEC) << endl;
+	cout << "time [sec]: " << time/double(CLOCKS_PER_SEC) << endl;
+
+	string LHS = "LHS.dat";
+	vec2D2File(LHS,A);
+
+	string RHS = "RHS.dat";
+	vec1D2File(RHS, b);
 
 
 
+
+	// int it = 0;
+	// double delta = 1.0;
+	// cout << "Iteration: " << it << "\t|\tDelta: " << delta << endl;
+	// while (abs(delta) > tol)
+	// {
+	// 	it++;
+	// 	vector<vector<double> > FI = FI2C(T, u, v, S);	// Only changes on every time loop
+	//
+	// 	// vector<vector<double> >deltaT = AppFac(T, u, v, S, FI);
+	// 	// // RK2(T, u, v);
+	// 	// // EE(T, u, v);
+	// 	// for (int j = 1; j < jmax-1; j++)
+	// 	// {
+	// 	// 	for (int i = 1; i < imax-1; i++)
+	// 	// 	{
+	// 	// 		T[j][i] += deltaT[i][j];
+	// 	// 	}
+	// 	// }
+	//
+	//
+	// 	vector<vector<double> > FI_nogho = removeGhost(FI);
+	// 	vector<double> b = mat2vec(FI_nogho);
+	// 	b = ScaV(dt, b);
+	// 	vector<double> x = LU(A, b);
+	// 	// vector<double> x = Cholesky(A, b);
+	// 	// vector<double> x = LUpivot(A, b);
+	//
+	// 	vector<vector<double> >deltaT = vec2mat(x);
+	// 	for (int j = 0; j < jmax-2; j++)
+	// 	{
+	// 		for (int i = 0; i < imax-2; i++)
+	// 		{
+	// 			T[j+1][i+1] += deltaT[j][i];
+	// 		}
+	// 	}
+	//
+	// 	ghost(T, u, v);
+	//
+	// 	delta = maxChange(T0, T);
+	// 	cout << "Iteration: " << it << "\t|\tDelta: " << delta << endl;
+	// 	T0 = copyMat(T);
+	// }
+	//
+	// vector<vector<double> > ExT = exactTemp();
+	// cout << setprecision(6) << delta << endl;
+	// vector<vector<double> > err = error(T, ExT);
+	// double L2 = L2Norm(err);
+	// cout << setprecision(6) << "L2 norm: " << L2 << endl;
+	// cout << "Iterations: " << it << endl;
+	// cout << "Timestep: " << dt << endl;
+	//
+	// time = clock() - time;
+	// cout << "Domain size: " << (imax-2) << " X " << (jmax-2) << endl;
+	// cout << "time [sec]: " << time/double(CLOCKS_PER_SEC) << endl;
 
 
 	// string Tname = "T_dev_" + to_string(imax-2) + "x" + to_string(jmax-2) + ".dat";

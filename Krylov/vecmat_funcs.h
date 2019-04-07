@@ -16,7 +16,9 @@ void MatAddAtoB(vector<vector<double> > &A, vector<vector<double> > &B);	// A + 
 void resizeMat(vector<vector<double> > &A, int m, int n); // Resize a matrix to m x n
 void LUdecomp(vector<vector<double> > &A, vector<vector<double> > &L, vector<vector<double> > &U); // Factors a Matrix A into lower and upper triangular matrices (L & U) s.t. A=LU
 void invertLowerTri(vector<vector<double> > &L); // Inverts a lower triangular matrix with 1s on diagonal
-void invertUpperTri(vector<vector<double> > &U); // Inverts a lower triangular matrix with 1s on diagonal
+void invertUpperTri(vector<vector<double> > &U); // Inverts a upper triangular matrix
+void zeroVec(vector<double> &V); // Resets a vector to zero vector
+void zeroMat(vector<vector<double> > &M); // Resets a matrix to zero matrix
 
 double MaxV(vector<double> &V);	// Returns the maximum value of a vector
 double MagV(vector<double> &V);	// Returns the length of a vector
@@ -30,8 +32,7 @@ vector<double> Vsub(vector<double> &A, vector<double> &B);	// Vector Subtraction
 vector<double> ScaV(double S, vector<double> &A);	// Scalar vector multiplication
 vector<double> copyVec(vector<double> &V); // Returns a copy of a matrix
 
-vector<vector<double> > inverse(vector<vector<double> > &A); // Returns the inverse of matrix A
-vector<vector<double> > getDiagInv(vector<vector<double> > &A); // Divides each row by the diagonal entry s.t. A(i,i)=1
+vector<vector<double> > getDiagInv(vector<vector<double> > &A); // Returns the inverse of diagonal entries
 vector<vector<double> > transpose(vector<vector<double> > &A); // Transposes a matrix
 vector<vector<double> > vec2mat(vector<double> &V);	// Reshapes a vector into a matrix
 vector<vector<double> > matrixReshape(vector<vector<double> >& nums, int r, int c); // Reshapes a matrix to another dimension
@@ -135,58 +136,33 @@ void invertLowerTri(vector<vector<double> > &L){
 			L[i][j] = -sum;
 		}
 	}
-
-	// for (int i = 0; i < n; i++)
-	// {
-	// 	L[i][i] = 1./L[i][i];
-	// }
-
-	// int d = 1;
-  // for (int i = 1; i < n; i++)
-  // {
-  //   for (int j = i; j < n; j++)
-  //   {
-	// 		double sum = 0.;
-	// 		for (int k = j-d; k < j; k++)
-	// 		{
-	// 			sum += L[j][k]*L[k][j];
-	// 		}
-	// 		L[j][j-d] = -sum*L[j][j];
-  //   }
-  //   d++;
-  // }
 }
 void invertUpperTri(vector<vector<double> > &U){
 	int n = U.size();
-	transpose(U);
+	// printVec2D(U);
+	U = transpose(U);
+	// printVec2D(U);
 	vector<vector<double> > D = getDiagInv(U);
-	U = MM(D, U);
+	U = MM(D,U);
+	// printVec2D(U);
 	invertLowerTri(U);
-	U = MM(U, D);
-	transpose(U);
-
-
-
-
-
-
-	// vector<vector<double> > Uinv(n, vector<double>(n));
-	// for (int i = 0; i < n; i++)
-	// {
-	// 	Uinv[i][i] = 1./U[i][i];
-	// }
-	// for (int i = 0; i < n-1; i++)
-	// {
-	// 	for (int j = i+1; j < n; j++)
-	// 	{
-	// 		double sum = 0.;
-	// 		for (int k = i; k < j+1; k++)
-	// 		{
-	// 			sum += Uinv[i][k]*U[k][i];
-	// 		}
-	// 		Uinv[i][j] = -sum / U[i][i];
-	// 	}
-	// }
+	U = MM(U,D);
+	U = transpose(U);
+}
+void zeroVec(vector<double> &V){
+	for (int j = 0; j < V.size(); j++)
+	{
+		V[j] = 0;
+	}
+}
+void zeroMat(vector<vector<double> > &M){
+	for (int j = 0; j < M.size(); j++)
+	{
+		for (int i = 0; i < M[0].size(); i++)
+		{
+			M[j][i] = 0;
+		}
+	}
 }
 
 
@@ -320,33 +296,12 @@ vector<double> copyVec(vector<double> &V){
 	return C;
 }
 
-vector<vector<double> > inverseLU(vector<vector<double> > &A){
-	int n = A.size();
-	vector<vector<double> > L(n, vector<double>(n));
-	vector<vector<double> > U(n, vector<double>(n));
-
-	// Decompose A into upper and lower triangular matrices
-	LUdecomp(A, L, U);
-	cout << "U:\n";
-	printVec2D(U);
-	// Solve for inverse of L
-	invertLowerTri(L);
-	// Solve for inverse of U
-	invertUpperTri(U);
-
-	cout << "Uinv:\n";
-	printVec2D(U);
-
-
-
-	return U;
-}
 vector<vector<double> > getDiagInv(vector<vector<double> > &A){
 	int n = A.size();
 	vector<vector<double> > D = Id(n);
 	for (int i = 0; i < n; i++)
 	{
-			D[i][i] /= A[i][i];
+		D[i][i] /= A[i][i];
 	}
 	return D;
 }
@@ -354,9 +309,9 @@ vector<vector<double> > transpose(vector<vector<double> > &A){
 	int rows = A.size();
 	int cols = A[0].size();
 	vector<vector<double> > Atranspose(cols, vector<double>(rows));
-	for(int j = 0; j < rows; j++)
+	for(int j = 0; j < cols; j++)
 	{
-		for(int i = 0; i < cols; i++)
+		for(int i = 0; i < rows; i++)
 		{
 			Atranspose[j][i] = A[i][j];
 		}
