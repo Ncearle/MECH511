@@ -22,8 +22,8 @@ using namespace std;
 using namespace xt;
 
 // Domain Constants
-extern constexpr int imax = 22;
-extern constexpr int jmax = 12;
+extern constexpr int imax = 5;
+extern constexpr int jmax = 5;
 
 extern constexpr double xmax = 40.;
 extern constexpr double ymax = 1.;
@@ -45,4 +45,4 @@ extern constexpr int u0 = 1;		// Initial x velocity
 extern constexpr int v0 = 1;		// Initial y velocity
 extern constexpr int T0 = 1;		// Initial temperature
 
-extern constexpr int p = 4; // Precision for printing
+extern constexpr int p = 3; // Precision for printing

@@ -11,12 +11,12 @@
 
 void printVec(vector<double> vec);		// Prints a vector to the console
 void printVec2D(vector<vector<double>> vec);		// Prints a 2D vector to the console
-void printVec3D(vector<vector<vector<double>>> vec, int k);		// Prints a layer of a 3D vector to the console 
+void printVec3D(vector<vector<vector<double>>> vec, int k);		// Prints a layer of a 3D vector to the console
 void vec2D2File(const char* fileName, vector<vector<double>> &vec); // Prints a 2D vector to a file
 void vec1D2File(const string fileName, vector<double> &vec); // Prints 1D vector to a file
-void printTable(vector<vector<vector<double>>> vec);	// Prints the data in table form 
+void printTable(vector<vector<vector<double>>> vec);	// Prints the data in table form
 
-void printVec(vector<double> vec) 
+void printVec(vector<double> vec)
 {
 		for (int i = 0; i < vec.size(); i++)
 		{
@@ -25,7 +25,7 @@ void printVec(vector<double> vec)
 		cout << endl << endl;
 }
 
-void printVec2D(vector<vector<double>> vec) 
+void printVec2D(vector<vector<double>> vec)
 {
 	for (int j = 0; j < vec.size(); j++)
 	{
@@ -38,7 +38,7 @@ void printVec2D(vector<vector<double>> vec)
 	cout << endl;
 }
 
-void printVec3D(vector<vector<vector<double>>> vec, int k) 
+void printVec3D(vector<vector<vector<double>>> vec, int k)
 {
 	for (int j = vec.size()-1; j > -1; j--)
 	{
@@ -52,7 +52,7 @@ void printVec3D(vector<vector<vector<double>>> vec, int k)
 }
 
 void vec3D2File(const string fName0, const string fName1, const string fName2, vector<vector<vector<double>>> &vec) // Prints 3D vector to a file
-{			
+{
 	ofstream outfile0;
 	outfile0.open(fName0);
 	for (int j = 1; j < vec.size()-1; j++)
@@ -94,7 +94,7 @@ void vec3D2File(const string fName0, const string fName1, const string fName2, v
 }
 
 void vec2D2File(const string fileName, vector<vector<double>> &vec) // Prints 2D vector to a file
-{			
+{
 	ofstream outfile;
 	outfile.open(fileName);
 	for (int j = 0; j < vec.size(); j++)
