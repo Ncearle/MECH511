@@ -124,6 +124,7 @@ void LUdecomp(vector<vector<double> > &A, vector<vector<double> > &L, vector<vec
 }
 void invertLowerTri(vector<vector<double> > &L){
 	int n = L.size();
+	cout << "Lower:\n";
 	for (int i = 1; i < n; i++)
 	{
 		for (int j = 0; j < i; j++)
@@ -164,7 +165,6 @@ void zeroMat(vector<vector<double> > &M){
 		}
 	}
 }
-
 
 double MaxV(vector<double> &V){
 	double M = V[0];

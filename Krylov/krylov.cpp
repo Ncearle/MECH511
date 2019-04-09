@@ -460,27 +460,22 @@ vector<vector<double> > preconditioner(vector<vector<double> > &A, string pre)
   vector<vector<double> > Pinv(n, vector<double>(n));
   if (pre == "LR")
   {
-		vector<vector<double> > P(n, vector<double>(n));
+		vector<vector<double> > R(n, vector<double>(n));
 		for (int i = 0; i < n; i++)
 		{
-			P[i][i] = A[i][i];
-			P[i][i+1] = A[i][i+1];
-			P[i][i-1] = A[i][i-1];
-			cout << i << " ";
+			R[i][i] = A[i][i];
+			R[i][i+1] = A[i][i+1];
+			R[i][i-1] = A[i][i-1];
 		}
 		cout << "\nLR\n";
     vector<vector<double> > L = Id(n);
-    vector<vector<double> > R(n, vector<double>(n));
-    P[0][0] = A[0][0]/abs(A[0][0]);
-    R[0][0] = P[0][0];
+    R[0][0] = R[0][0]/abs(R[0][0]);
     for (int i = 1; i < n; i++)
     {
-      L[i][i-1] = P[i][i-1]/R[i-1][i-1];
-      R[i-1][i] = P[i-1][i];
-      R[i][i] = P[i][i] - L[i][i-1]*R[i-1][i];
-			cout << i << " ";
+      L[i][i-1] = R[i][i-1]/R[i-1][i-1];
+			R[i][i-1] = 0.;
+      R[i][i] -= L[i][i-1]*R[i-1][i];
     }
-		cout << "Invesion";
     invertLowerTri(L);
     invertUpperTri(R);
     Pinv = MM(R, L);
@@ -522,15 +517,9 @@ vector<double> GMRES(vector<vector<double> > &A, vector<double> &b, vector<vecto
   vector<double> Be1 = {res};
   vector<vector<double> > H;
 
-	// string type;
-	// if (pre == "LR"){type = "LR tri-diagonal";}
-	// else if (pre == "jacobi"){type = "Jacobi";}
-	// else{type = "no";}
-	// cout << "\nGMRES with " << type << " preconditioning:\n\n";
-
   int j = 0;
   // cout << "GMRES: Iteration: " << j << "\t|\tResidual: " << res << endl;
-  while (res > tol && j < 20)
+  while (res > tol && j < n)
   {
     resizeMat(H, j+2, j+1);
     vector<double> w = MVM(A, z[j]);
@@ -612,8 +601,7 @@ int main()
 	vector<vector<double> > T0 = copyMat(T);	// Initial
 	vector<vector<double> > FI = FI2C(T, u, v, S);	// Only changes on every time loop
 	vector<vector<double> > A = assembleLHS(u,v);
-	vector<vector<double> > Pinv = preconditioner(A, "LR");
-
+	vector<vector<double> > Pinv = preconditioner(A, "jacobi");
 	vector<double> b = assembleRHS(FI);
 	b = ScaV(dt, b);
 	//
@@ -633,16 +621,16 @@ int main()
 	// printVec2D(delta);
 	// double time = double(end-start)/CLOCKS_PER_SEC;
 
-	// cout << "LU solve: \n";
-	// vector<double> y = LU(A, b);
+	cout << "LU solve: \n";
+	vector<double> y = LU(A, b);
 
-	// vector<vector<double> > delta = vec2mat(x);
-	// vector<vector<double> > sol = vec2mat(y);
+	vector<vector<double> > delta = vec2mat(x);
+	vector<vector<double> > sol = vec2mat(y);
 	// printVec2D(sol);
 	// //
-	// vector<vector<double> > err = error(delta, sol);
-	// double L2 = L2Norm(err);
-	// cout << setprecision(6) << "L2: " << L2 << endl;
+	vector<vector<double> > err = error(delta, sol);
+	double L2 = L2Norm(err);
+	cout << setprecision(6) << "L2: " << L2 << endl;
 
 
 	// string LHS = "LHS.dat";
