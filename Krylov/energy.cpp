@@ -466,7 +466,9 @@ vector<vector<double> > preconditioner(vector<vector<double> > &A, string pre)
 			P[i][i] = A[i][i];
 			P[i][i+1] = A[i][i+1];
 			P[i][i-1] = A[i][i-1];
+			cout << i << " ";
 		}
+		cout << "\nLR\n";
     vector<vector<double> > L = Id(n);
     vector<vector<double> > R(n, vector<double>(n));
     P[0][0] = A[0][0]/abs(A[0][0]);
@@ -476,8 +478,9 @@ vector<vector<double> > preconditioner(vector<vector<double> > &A, string pre)
       L[i][i-1] = P[i][i-1]/R[i-1][i-1];
       R[i-1][i] = P[i-1][i];
       R[i][i] = P[i][i] - L[i][i-1]*R[i-1][i];
+			cout << i << " ";
     }
-
+		cout << "Invesion";
     invertLowerTri(L);
     invertUpperTri(R);
     Pinv = MM(R, L);
@@ -506,7 +509,7 @@ vector<vector<double> > preconditioner(vector<vector<double> > &A, string pre)
   return Pinv;
 }
 // GMRES w/ Preconditioning
-vector<double> GMRES(vector<vector<double> > &A, vector<double> &b, vector<vector<double> > &Pinv, int m=imax*jmax)
+vector<double> GMRES(vector<vector<double> > &A, vector<double> &b, vector<vector<double> > &Pinv)
 {
   int n = b.size();
   vector<double> x0(n);	// Initial guess (zero vector)
@@ -527,7 +530,7 @@ vector<double> GMRES(vector<vector<double> > &A, vector<double> &b, vector<vecto
 
   int j = 0;
   // cout << "GMRES: Iteration: " << j << "\t|\tResidual: " << res << endl;
-  while (res > tol && j < n)
+  while (res > tol && j < 20)
   {
     resizeMat(H, j+2, j+1);
     vector<double> w = MVM(A, z[j]);
@@ -553,7 +556,7 @@ vector<double> GMRES(vector<vector<double> > &A, vector<double> &b, vector<vecto
     r0 = residual(A, x0, b);
     res = MagV(r0);
     j++;
-    // cout << "GMRES: Iteration: " << j << "\t|\tResidual: " << res << endl;
+    cout << "GMRES: Iteration: " << j << "\t|\tResidual: " << res << endl;
   }
 	return x0;
 }
@@ -595,8 +598,8 @@ vector<double> GMRESnoPre(vector<vector<double> > &A, vector<double> &b)
     r0 = residual(A, x0, b);
     res =  MagV(r0);
     j++;
+		cout << "GMRES: Iteration: " << j << "\t|\tResidual: " << res << endl;
   }
-	// cout << "GMRES: Iteration: " << j << "\t|\tResidual: " << res << endl;
 	return x0;
 }
 int main()
@@ -609,30 +612,37 @@ int main()
 	vector<vector<double> > T0 = copyMat(T);	// Initial
 	vector<vector<double> > FI = FI2C(T, u, v, S);	// Only changes on every time loop
 	vector<vector<double> > A = assembleLHS(u,v);
-	// vector<vector<double> > Pinv = preconditioner(A, "LR");
+	vector<vector<double> > Pinv = preconditioner(A, "LR");
 
 	vector<double> b = assembleRHS(FI);
 	b = ScaV(dt, b);
 	//
-	// // printVec2D(A);
-	int time=clock();
-	vector<vector<double> > delta = AppFac(T, u, v, S, FI);
+	auto start = high_resolution_clock::now();
+	// cout << "Thomas solve: \n";
+	// vector<vector<double> > delta = AppFac(T, u, v, S, FI);
+	//
+	cout << "GMRES solve:\n";
+	vector<double> x = GMRES(A, b, Pinv);
 
-	cout << "LU solve:\n";
-	vector<double> x = LU(A, b);
-
-	time = clock() - time;
+	// clock_t end = clock();
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<nanoseconds>(stop-start);
 	cout << "Mesh size: " << (imax-2) << " X " << (jmax-2) << endl;
-	cout << "time [sec]: " << time/double(CLOCKS_PER_SEC) << endl;
-
-	delta = transpose(delta);
+	cout << "time [sec]: " << duration.count()*pow(10,-9) << endl;
+	// delta = transpose(delta);
 	// printVec2D(delta);
-	vector<vector<double> > sol = vec2mat(x);
-	// printVec2D(sol);
+	// double time = double(end-start)/CLOCKS_PER_SEC;
 
-	vector<vector<double> > err = error(delta, sol);
-	double L2 = L2Norm(err);
-	cout << "L2: " << L2 << endl;
+	// cout << "LU solve: \n";
+	// vector<double> y = LU(A, b);
+
+	// vector<vector<double> > delta = vec2mat(x);
+	// vector<vector<double> > sol = vec2mat(y);
+	// printVec2D(sol);
+	// //
+	// vector<vector<double> > err = error(delta, sol);
+	// double L2 = L2Norm(err);
+	// cout << setprecision(6) << "L2: " << L2 << endl;
 
 
 	// string LHS = "LHS.dat";
@@ -644,6 +654,8 @@ int main()
 
 
 	// int time=clock();
+	// auto start = high_resolution_clock::now();
+	//
 	// int it = 0;
 	// double delta = 1.0;
 	// cout << "Iteration: " << it << "\t|\tDelta: " << delta << endl;
@@ -653,8 +665,6 @@ int main()
 	// 	vector<vector<double> > FI = FI2C(T, u, v, S);	// Only changes on every time loop
 	//
 	// 	vector<vector<double> >deltaT = AppFac(T, u, v, S, FI);
-	// 	// RK2(T, u, v);
-	// 	// EE(T, u, v);
 	// 	for (int j = 1; j < jmax-1; j++)
 	// 	{
 	// 		for (int i = 1; i < imax-1; i++)
@@ -662,7 +672,6 @@ int main()
 	// 			T[j][i] += deltaT[i][j];
 	// 		}
 	// 	}
-	//
 	//
 	// 	// vector<double> b = assembleRHS(FI);
 	// 	// b = ScaV(dt, b);
@@ -679,9 +688,13 @@ int main()
 	// 	delta = maxChange(T0, T);
 	//
 	// 	T0 = copyMat(T);
+	// 	cout << "Iteration: " << it << "\t|\tDelta: " << delta << endl;
 	// }
-	// cout << "Iteration: " << it << "\t|\tDelta: " << delta << endl;
+	// auto stop = high_resolution_clock::now();
+	// auto duration = duration_cast<nanoseconds>(stop-start);
+	// cout << "time [sec]: " << duration.count() << endl;
 	//
+	// //
 	// vector<vector<double> > ExT = exactTemp();
 	// cout << setprecision(6) << delta << endl;
 	// vector<vector<double> > err = error(T, ExT);

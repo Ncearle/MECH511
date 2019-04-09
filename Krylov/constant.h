@@ -14,12 +14,14 @@
 #include <iomanip>
 #include <ctime>
 #include <string>
-#include "xtensor/xarray.hpp"
-#include "xtensor/xio.hpp"
-#include "xtensor/xview.hpp"
+#include <chrono>
+// #include "xtensor/xarray.hpp"
+// #include "xtensor/xio.hpp"
+// #include "xtensor/xview.hpp"
 
 using namespace std;
-using namespace xt;
+using namespace std::chrono;
+// using namespace xt;
 
 // Domain Constants
 extern constexpr int imax = 82;
@@ -45,4 +47,4 @@ extern constexpr int u0 = 1;		// Initial x velocity
 extern constexpr int v0 = 1;		// Initial y velocity
 extern constexpr int T0 = 1;		// Initial temperature
 
-extern constexpr int p = 4; // Precision for printing
+extern constexpr int p = 2; // Precision for printing

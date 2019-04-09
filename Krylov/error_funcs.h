@@ -23,7 +23,7 @@ vector<vector<double>> error(vector<vector<double>> num, vector<vector<double>> 
 	{
 		for (int i = 1; i < num[0].size() - 1; i++)
 		{
-			err[j][i] = exact[j][i] - num[j][i];
+			err[j][i] = abs(exact[j][i]) - abs(num[j][i]);
 		}
 	}
 	return err;
