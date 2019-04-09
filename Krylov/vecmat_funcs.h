@@ -319,11 +319,11 @@ vector<vector<double> > transpose(vector<vector<double> > &A){
 	return Atranspose;
 }
 vector<vector<double> > vec2mat(vector<double> &V){
-	vector<vector<double> > M((jmax-2),vector<double>(imax-2));
+	vector<vector<double> > M(jmax,vector<double>(imax));
 	int k = 0;
-	for (int j = 0; j < (jmax-2); j++)
+	for (int j = 0; j < jmax; j++)
 	{
-		for (int i = 0; i < (imax-2); i++)
+		for (int i = 0; i < imax; i++)
 		{
 			M[j][i] = V[k++];
 		}

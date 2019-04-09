@@ -22,8 +22,8 @@ using namespace std;
 using namespace xt;
 
 // Domain Constants
-extern constexpr int imax = 5;
-extern constexpr int jmax = 5;
+extern constexpr int imax = 82;
+extern constexpr int jmax = 42;
 
 extern constexpr double xmax = 40.;
 extern constexpr double ymax = 1.;
@@ -31,7 +31,7 @@ extern constexpr double dx = xmax / (imax - 2);
 extern constexpr double dy = ymax / (jmax - 2);
 
 extern constexpr int ubar = 3;		// average velocity in x [m/s]
-extern constexpr double dt = 0.05;
+extern constexpr double dt = 0.25;
 extern constexpr double tol = pow(10, -9); // Tolerance for max change, "nano"
 
 // Constants
@@ -45,4 +45,4 @@ extern constexpr int u0 = 1;		// Initial x velocity
 extern constexpr int v0 = 1;		// Initial y velocity
 extern constexpr int T0 = 1;		// Initial temperature
 
-extern constexpr int p = 3; // Precision for printing
+extern constexpr int p = 4; // Precision for printing
