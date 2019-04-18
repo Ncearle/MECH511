@@ -392,6 +392,7 @@ vector<vector<double> > MM(vector<vector<double> > &A, vector<vector<double> > &
 	else
 	{
 		cout << "\n!!MULTIPLICATION FAILED -- INNER DIMENSIONS MUST MATCH!!\n";
+		exit;
 	}
 
 	return C;

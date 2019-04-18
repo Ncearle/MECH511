@@ -9,8 +9,9 @@
 #include "constant.h"
 
 double inittemp(double rho, double P);
-double speedofsound(vector<vector<double> > &U, int i)
-double uVel(vector<vector<dobule> > &U, int i);
+double speedofsound(vector<double> &Upm);
+double uVel(vector<double> &Upm);
+double density(vector<double> &Upm);
 vector<double> Uplus(vector<vector<double> > &U, int i);
 vector<double> Uminus(vector<vector<double> > &U, int i);
 
@@ -18,30 +19,16 @@ double inittemp(double rho, double P){
   double T = P/(rho*R);
   return T;
 }
-double speedofsound(vector<vector<double> > &U, int i){
-  double T = (U[2][i] - pow(U[1][i],2)/(2*U[0][i])) / (U[0][i]*Cv);
+double speedofsound(vector<double> &Upm){
+  double T = (Upm[2] - pow(Upm[1],2)/(2*Upm[0])) / (Upm[0]*Cv);
   double c = sqrt(gam*R*T);
   return c;
 }
-double uVel(vector<vector<double> > &U, int i, string PM){
-  double u;
-  if (PM == "+"){
-    u = U[1][i]/U[0][i];    // first order u_i+1/2;i = u_i
-  }
-  else if (PM == "-"){
-    u = U[1][i]/U[0][i];
-  }
-  return u;
+double uVel(vector<double> &Upm){
+  return Upm[1]/Upm[0];
 }
-double density(vector<vector<double> > &U, int i, string PM){
-  double rho
-  if (PM == "+"){
-    rho = U[0][i];   // first order rho_i+1/2;i = rho_i
-  }
-  else if (PM == "-"){
-    rho = U[0][i];
-  }
-  return rho;
+double density(vector<double> &Upm){
+  return Upm[0];
 }
 
 vector<double> Uplus(vector<vector<double> > &U, int i){
@@ -58,7 +45,7 @@ vector<double> Uminus(vector<vector<double> > &U, int i){
   for (int k = 0; k < 3; k++)
   {
     Uminus[k] = U[k][i]; // first order
-    // Uminurs[k] = (3*U[k][i] - U[k][i-1])/2; //second order
+    // Uminus[k] = (3*U[k][i] - U[k][i+1])/2; //second order
   }
   return Uminus;
 }

@@ -4,7 +4,6 @@
 #include "constant.h"
 #include "print_funcs.h"
 #include "error_funcs.h"
-// #include "exact.h"
 #include "vecmat_funcs.h"
 #include "phys_funcs.h"
 #include "blocktri_vector.h"
@@ -80,11 +79,11 @@ void init(vector<vector<double> > &U)
 	ghost(U);
 }
 
-vector<vector<double> > jac(vector<vector<double> > &U, int i, string PM, string inv="")	// Set inv="inv" to return inverse of the jacobian
+vector<vector<double> > jac(vector<double> &Upm, string inv="")	// Set inv="inv" to return inverse of the jacobian
 {
 	vector<vector<double> > J(3, vector<double>(3));
-	double rho = density(U, i, PM);
-	double u = uVel(U, i, PM);
+	double rho = density(Upm);
+	double u = uVel(Upm);
 
 	J[0][0] = 1.0;
 	J[1][0] = u;
@@ -105,13 +104,12 @@ vector<vector<double> > jac(vector<vector<double> > &U, int i, string PM, string
 	return J;
 }
 
-vector<vector<double> > Xmatrix(vector<vector<double> > &U, int i, string PM, string LR) // Input L or R depending
+vector<vector<double> > Xmatrix(vector<double> &Upm, string LR) // Input L or R depending
 {
 	vector<vector<double> > X(3, vector<double>(3));
-	double c = speedofsound(U, i, PM);
-	double rho = density(U, i, PM);
-	if (LR == "R")
-	{
+	double c = speedofsound(Upm);
+	double rho = density(Upm);
+	if (LR == "R"){
 		X[0][0] = 1.0;
 		X[0][1] = rho/c;
 		X[0][2] = -X[0][1];
@@ -120,8 +118,7 @@ vector<vector<double> > Xmatrix(vector<vector<double> > &U, int i, string PM, st
 		X[2][1] = rho*c;
 		X[2][2] = -X[2][1];
 	}
-	else if (LR == "L")
-	{
+	else if (LR == "L"){
 		X[0][0] = 1.0;
 		X[0][2] = -1.0/(c*c);
 		X[1][1] = 0.5;
@@ -129,55 +126,51 @@ vector<vector<double> > Xmatrix(vector<vector<double> > &U, int i, string PM, st
 		X[2][1] = 0.5;
 		X[2][2] = -X[1][2];
 	}
+	else{
+		cout << "Xmatrix input error";
+		exit;
+	}
 }
 
-vector<double> eig(vector<vector<double> > &U, int i, string LR)
+vector<double> eig(vector<double> &Uplus, vector<double> &Uminus)
 {
 	vector<double> lambda(3);
-	double uminus, uplus, cminus, cplus;
-	if (LR == "L"){
-		uplus = uVel(U, i-1, "+");
-		uminus = uVel(U, i, "-");
-		cplus = speedofsound(U, i-1, "+");
-		cminus = speedofsound(U, i, "-");
-	}
-	else if (LR == "R"){
-		uplus = uVel(U, i, "+");
-		uminus = uVel(U, i+1, "-");
-		cplus = speedofsound(U, i, "+");
-		cminus = speedofsound(U, i+1, "-");
-	}
+	double uminus = uVel(Uminus);
+	double uplus = uVel(Uplus);
+	double cminus = speedofsound(Uminus);
+	double cplus = speedofsound(Uplus);
+
 	lambda[0] = (uminus + uplus)/2;
 	lambda[1] = (uminus + cminus + uplus + cplus)/2;
 	lambda[2] = (uminus - cminus + uplus - cplus)/2;
 	return lambda;
 }
 
-vector<vector<double> > bigLamb(vector<vector<double> > &U, int i, string PM)		// input i & PM = "+" for right side, i+1 & PM = "-" for left side
+vector<vector<double> > bigLamb(vector<double> &Uplus, vector<double> &Uminus, string PM)		// input i & PM = "+" for right side, i+1 & PM = "-" for left side
 {
 	vector<vector<double> > bigLamb(3, vector<double>(3));
 	if (PM == "+"){
-		vector<double> eig = eig(U, i);
-		double u = uVel(U, i, "+");
-		double c = speedofsound(U, i, "+");
-		if (eig[0] > 0){bigLamb[0][0] = 0.5*(u + abs(u));}
-		else if (eig[1] > 0){bigLamb[1][1] = 0.5*(u+c + abs(u+c));}
-		else if (eig[2] > 0){bigLamb[2][2] = 0.5*(u-c + abs(u-c));}
+		vector<double> littleLamb = eig(Uplus, Uminus);
+		double u = uVel(Uplus);
+		double c = speedofsound(Uplus);
+		if (littleLamb[0] > 0){bigLamb[0][0] = 0.5*(u + abs(u));}
+		else if (littleLamb[1] > 0){bigLamb[1][1] = 0.5*(u+c + abs(u+c));}
+		else if (littleLamb[2] > 0){bigLamb[2][2] = 0.5*(u-c + abs(u-c));}
 	}
 	else if (PM == "-"){
-		vector<double> eig = eig(U, i);
-		double u = uVel(U, i, "-");
-		double c = speedofsound(U, i, "-");
-		if (eig[0] < 0){bigLamb[0][0] = 0.5*(u - abs(u));}
-		else if (eig[1] < 0){bigLamb[1][1] = 0.5*(u+c - abs(u+c));}
-		else if (eig[2] < 0){bigLamb[2][2] = 0.5*(u-c - abs(u-c));}
+		vector<double> littleLamb = eig(Uplus, Uminus);
+		double u = uVel(Uminus);
+		double c = speedofsound(Uminus);
+		if (littleLamb[0] < 0){bigLamb[0][0] = 0.5*(u - abs(u));}
+		else if (littleLamb[1] < 0){bigLamb[1][1] = 0.5*(u+c - abs(u+c));}
+		else if (littleLamb[2] < 0){bigLamb[2][2] = 0.5*(u-c - abs(u-c));}
 	}
 	return bigLamb;
 }
 
 vector<vector<double> > flux(vector<vector<double> > &U, string scheme)
 {
-	vector<vector<double> > flux(3, vector<double>(imax));
+	vector<vector<double> > F(3, vector<double>(imax));
 	vector<vector<double> > Fplushalf(3, vector<double>(imax));
 	vector<vector<double> > Fminushalf(3, vector<double>(imax));
 	// Steger-Warming scheme
@@ -185,70 +178,83 @@ vector<vector<double> > flux(vector<vector<double> > &U, string scheme)
 		// F_i+
 		for (int i = 2; i < imax-2; i++)
 		{
-			// Fi+ for F_i+1/2
-			vector<vector<double> > UoverV = jac(U, i);
-			vector<vector<double> > XR = Xmatrix(U, i, "R");
-			vector<vector<double> > lamPlus = bigLamb(U, i, "+");
-			vector<vector<double> > XL = Xmatrix(U, i, "L");
-			vector<vector<double> > VoverU = jac(U, i, "inv");
+			//================
+		 	// F_i-1/2
+			//================
+			vector<double> Up = Uplus(U, i-1);
+			vector<double> Um = Uminus(U, i);
+
+			//F+i-1
+			vector<vector<double> > UoverV = jac(Up);
+			vector<vector<double> > XR = Xmatrix(Up, "R");
+			vector<vector<double> > lamPlus = bigLamb(Up, Um, "+");
+			vector<vector<double> > XL = Xmatrix(Up, "L");
+			vector<vector<double> > VoverU = jac(Up, "inv");
 
 			vector<vector<double> >term1 = MM(UoverV, XR);
 			term1 = MM(term1, lamPlus);
 			term1 = MM(term1, XL);
 			term1 = MM(term1, VoverU);
-			vector<double> Uplus = Uplus(U, i);
-			vector<double> Fplus = MVM(term1, Uplus);
+			vector<double> Fplus = MVM(term1, Up);
 
-			// Fi+1- for F_i+1/2
-			UoverV = jac(U, i+1);
-			XR = Xmatrix(U, i+1, "R");
-			vector<vector<double> > lamminus = bigLamb(U, i+1, "-");
-			XL = Xmatrix(U, i+1, "L");
-			VoverU = jac(U, i+1, "inv");
-
-			term1 = MM(UoverV, XR);
-			term1 = MM(term1, lamPlus);
-			term1 = MM(term1, XL);
-			term1 = MM(term1, VoverU);
-			vector<double> Uminus = Uminus(U, i+1);
-			vector<double> Fminus = MVM(term1, Uminus);
-
-			Fplushalf[i] = Vadd(Fplus, Fminus);
-			// ========================================================================
-			// Fi+ for F_i-1/2
-			UoverV = jac(U, i-1);
-			XR = Xmatrix(U, i-1, "R");
-			lamPlus = bigLamb(U, i-1, "+");
-			XL = Xmatrix(U, i-1, "L");
-			VoverU = jac(U, i-1, "inv");
+			// F-i
+			UoverV = jac(Um);
+			XR = Xmatrix(Um, "R");
+			vector<vector<double> > lamminus = bigLamb(Up, Um, "-");
+			XL = Xmatrix(Um, "L");
+			VoverU = jac(Um, "inv");
 
 			term1 = MM(UoverV, XR);
 			term1 = MM(term1, lamPlus);
 			term1 = MM(term1, XL);
 			term1 = MM(term1, VoverU);
-			Uplus = Uplus(U, i-1);
-			Fplus = MVM(term1, Uplus);
-
-			// Fi+1- for F_i-1/2
-			UoverV = jac(U, i);
-			XR = Xmatrix(U, i, "R");
-			lamminus = bigLamb(U, i, "-");
-			XL = Xmatrix(U, i, "L");
-			VoverU = jac(U, i, "inv");
-
-			term1 = MM(UoverV, XR);
-			term1 = MM(term1, lamPlus);
-			term1 = MM(term1, XL);
-			term1 = MM(term1, VoverU);
-			Uminus = Uminus(U, i);
-			Fminus = MVM(term1, Uminus);
+			vector<double> Fminus = MVM(term1, Um);
 
 			Fminushalf[i] = Vadd(Fplus, Fminus);
 
+			// ===============
+			// F_i+1/2
+			// ==============
+			Up = Uplus(U, i);
+			Um = Uminus(U, i+1);
+
+			//F+i-1
+			UoverV = jac(Up);
+			XR = Xmatrix(Up, "R");
+			lamPlus = bigLamb(Up, Um, "+");
+			XL = Xmatrix(Up, "L");
+			VoverU = jac(Up, "inv");
+
+			term1 = MM(UoverV, XR);
+			term1 = MM(term1, lamPlus);
+			term1 = MM(term1, XL);
+			term1 = MM(term1, VoverU);
+			Fplus = MVM(term1, Up);
+
+			// F-i
+			UoverV = jac(Um);
+			XR = Xmatrix(Um, "R");
+			lamminus = bigLamb(Up, Um, "-");
+			XL = Xmatrix(Um, "L");
+			VoverU = jac(Um, "inv");
+
+			term1 = MM(UoverV, XR);
+			term1 = MM(term1, lamPlus);
+			term1 = MM(term1, XL);
+			term1 = MM(term1, VoverU);
+			Fminus = MVM(term1, Um);
+
+			Fplushalf[i] = Vadd(Fplus, Fminus);
+
 		}
-		flux = -1/dx * Msub(Fplushalf, Fminushalf);
+		F = Msub(Fplushalf, Fminushalf);
+		F = ScaM(-1.0/dx, F);
 	}
-	return flux;
+	else{
+		cout << "Not a recognised scheme";
+		exit;
+	}
+	return F;
 }
 
 // Two Stage Runge Kutta time advance
@@ -296,7 +302,7 @@ vector<vector<double> > flux(vector<vector<double> > &U, string scheme)
 // 	cout << "Timestep: " << dt << endl;
 // 	cout << "Tolerance: " << tol << endl;
 // }
-
+//
 // void Imp(vector<vector<vector<double>>> &U)
 // {
 // 	init(U);
