@@ -27,22 +27,16 @@ using namespace std::chrono;
 extern constexpr int imax = 14;
 extern constexpr int jmax = 6;
 
-extern constexpr double xmax = 1.;
+extern constexpr double xmax = 1.0;
 extern constexpr double ymax = 0.1;
-extern constexpr double dx = xmax / (imax - 2);
-extern constexpr double dy = ymax / (jmax - 2);
+extern constexpr double dx = xmax / (imax - 4);
+extern constexpr double dy = ymax / (jmax - 4);
 
-extern constexpr int ubar = 3;		// average velocity in x [m/s]
 extern constexpr double dt = 0.05;
-extern constexpr double tol = pow(10, -9); // Tolerance for max change, "nano"
 
 // Constants
 extern constexpr double pi = M_PI;	// Pi
-extern constexpr int Re = 250.;		// Reynolds number
-extern constexpr double B = 1.;
-extern constexpr double w = 1.;
-
-extern constexpr double R = 287.058; // Specific gas constant for air
+extern constexpr double Rair = 287.058; // Specific gas constant for air
 extern constexpr double Cp = 1.006; // Specific heat constant for air
 extern constexpr double Cv = 0.7171; // Specific heat constant for air
 extern constexpr double gam = Cp/Cv;
@@ -54,4 +48,4 @@ extern constexpr int uR = 0;		// Initial right side velocity
 extern constexpr int PL = 12;		// Initial left side pressure
 extern constexpr int PR = 1;		// Initial right side pressure
 
-extern constexpr int p = 6; // Precision for printing
+extern constexpr int p = 4; // Precision for printing
