@@ -32,7 +32,7 @@ extern constexpr double ymax = 0.1;
 extern constexpr double dx = xmax / (imax - 4);
 extern constexpr double dy = ymax / (jmax - 4);
 
-extern constexpr double dt = 0.05;
+extern constexpr double dt = 0.005;
 
 // Constants
 extern constexpr double pi = M_PI;	// Pi

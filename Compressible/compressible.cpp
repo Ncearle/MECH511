@@ -260,13 +260,10 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme)
 				double rhoTilde = sqrt(rightRho*leftRho);
 				double uTilde = (sqrt(rightRho)*rightu + sqrt(leftRho)*leftu)/(sqrt(rightRho)*sqrt(leftRho));
 				double hTilde = (sqrt(rightRho)*rightH + sqrt(leftRho)*leftH)/(sqrt(rightRho)*sqrt(leftRho));
-
 				double PTilde = sqrt(rightP*leftP);
 				double ETilde = hTilde*rhoTilde-PTilde;
-
 				vector<double> UTilde = {rhoTilde, rhoTilde*uTilde, ETilde};
 
-				//F+i-1
 				vector<vector<double> > UoverV = jac(UTilde);
 				vector<vector<double> > XR = Xmatrix(UTilde, "R");
 				vector<vector<double> > Lambda = absBigLamb(Uplus, Uminus);
@@ -296,7 +293,7 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme)
 		}
 	}
 	else{
-		cout << "Not a recognised scheme";
+		cout << "Not a recognised scheme, guess again";
 		exit;
 	}
 	return flux;
@@ -361,21 +358,21 @@ int main()
 	printVec2D(U);
 	U = transpose(U);
 	vector<vector<double> > FI = getFlux(U, "Roe");
-	FI = transpose(FI);
-	printVec2D(FI);
-	FI = transpose(FI);
+	// FI = transpose(FI);
+	// printVec2D(FI);
+	// FI = transpose(FI);
 
-	// double t_fin = 0.15;
-	// int t_steps = t_fin/dt + 1;
-	//
-	// for (int n = 0; n < 1; n++)
-	// {
-	// 	// cout << n+1 << endl;
-	// 	U = RK2(U, "SW");
-	// 	// U = transpose(U);
-	// 	// printVec2D(U);
-	// 	// U = transpose(U);
-	// }
+	double t_fin = 0.15;
+	int t_steps = t_fin/dt+1;
+
+	for (int n = 0; n < t_steps; n++)
+	{
+		cout << n+1 << endl;
+		U = RK2(U, "SW");
+		U = transpose(U);
+		printVec2D(U);
+		U = transpose(U);
+	}
 	//
 	// string Dname = "data.dat";
 	// vec2D2File(Dname, U);
