@@ -39,13 +39,13 @@ extern constexpr double pi = M_PI;	// Pi
 extern constexpr double Rair = 287.058; // Specific gas constant for air
 extern constexpr double Cp = 1.006; // Specific heat constant for air
 extern constexpr double Cv = 0.7171; // Specific heat constant for air
-extern constexpr double gam = Cp/Cv;
+extern constexpr double gam = 1.4; //Cp/Cv;
 
-extern constexpr int rhoL = 6;		// Initial left side density
-extern constexpr int rhoR = 1;		// Initial right side density
-extern constexpr int uL = 0;		// Initial left side velocity
-extern constexpr int uR = 0;		// Initial right side velocity
-extern constexpr int PL = 12;		// Initial left side pressure
-extern constexpr int PR = 1;		// Initial right side pressure
+extern constexpr double rhoL = 1.01;		// Initial left side density
+extern constexpr double rhoR = 1.0;		// Initial right side density
+extern constexpr double uL = 0.0;		// Initial left side velocity
+extern constexpr double uR = 0.0;		// Initial right side velocity
+extern constexpr double PL = 1.0;		// Initial left side pressure
+extern constexpr double PR = 1.0;		// Initial right side pressure
 
-extern constexpr int p = 4; // Precision for printing
+extern constexpr int p = 8; // Precision for printing

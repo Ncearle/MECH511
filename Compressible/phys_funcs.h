@@ -8,21 +8,18 @@
 
 #include "constant.h"
 
-double inittemp(double rho, double P);
 double speedofsound(vector<double> &Upm);
 double uVel(vector<double> &Upm);
 double density(vector<double> &Upm);
+// double temperature(vector<double> &Upm);
+double pressure (vector<double> &Upm);
 vector<double> getPlus(vector<vector<double> > &U, int i);
 vector<double> getMinus(vector<vector<double> > &U, int i);
 vector<vector<double> > getF(vector<vector<double> > &U);
 
-double inittemp(double rho, double P){
-  double T = P/(rho*Rair);
-  return T;
-}
 double speedofsound(vector<double> &Upm){
-  double T = (Upm[2] - pow(Upm[1],2)/(2*Upm[0])) / (Upm[0]*Cv);
-  double c = sqrt(gam*Rair*T);
+  double P = pressure(Upm);
+  double c = sqrt(gam*P/Upm[0]);
   return c;
 }
 double uVel(vector<double> &Upm){
@@ -31,16 +28,15 @@ double uVel(vector<double> &Upm){
 double density(vector<double> &Upm){
   return Upm[0];
 }
-double temperature(vector<double> &Upm){
-  double u = Upm[1]/Upm[0];
-  double rho = Upm[0];
-  double T = (Upm[2] - rho*u*u/2)/(rho*Cv);
-  return T;
-}
+// double temperature(vector<double> &Upm){
+//   double u = Upm[1]/Upm[0];
+//   double rho = Upm[0];
+//   double T = (Upm[2] - rho*u*u/2)/(rho*Cv);
+//   return T;
+// }
 double pressure (vector<double> &Upm){
-  double rho = Upm[1];
-  double T = temperature(Upm);
-  double P = rho*Rair*T;
+  double u = uVel(Upm);
+  double P = (Upm[2]-0.5*Upm[0]*u*u)*(gam-1);
   return P;
 }
 
