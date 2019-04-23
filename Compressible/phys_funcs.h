@@ -14,7 +14,7 @@ double density(vector<double> &Upm);
 double temperature(vector<double> &Upm);
 double pressure (vector<double> &Upm);
 vector<double> fluxLimiter(vector<double> &r, string scheme);
-vector<double> getPluus(vector<vector<double> > &U, int i, int order, string scheme);
+vector<double> getPlus(vector<vector<double> > &U, int i, int order, string scheme);
 vector<double> getMinus(vector<vector<double> > &U, int i, int order, string scheme);
 
 double speedofsound(vector<double> &Upm){
@@ -49,7 +49,7 @@ vector<double> fluxLimiter(vector<double> &r, string scheme){
       FL[k] = MaxV(temp);
     }
     else if (scheme == "vanleer"){
-      FL[k] = (r[k] + abs(r[k]))/(1+abs(r[k]));
+      FL[k] = (r[k] + abs(r[k]))/(1 + abs(r[k]));
     }
   }
   return FL;

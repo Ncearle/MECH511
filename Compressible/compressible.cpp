@@ -7,50 +7,27 @@
 #include "vecmat_funcs.h"
 #include "phys_funcs.h"
 
-// Given domain and velocities, sets and updates the bounary conditions
 void ghost(vector<vector<double> > &U)
 {
-	// // Top and Bottom Ghost Cells
-	// for (int i = 0; i < imax; i++)
-	// {
-	// 	double x = (i - 0.5) / (imax - 2);
-	// 	// pressure -- Neumann boundary condition (no flux across boundary)
-	// 	U[0][0][i] = U[0][1][i];
-	// 	U[0][jmax-1][i] = U[0][jmax-2][i];
-	//
-	// 	// density * velocity -- Neumann boundary condition (assumed a slip wall)
-	// 	U[1][0][i] = U[1][1][i];
-	// 	U[1][jmax-1][i] = U[1][jmax-2][i];
-	//
-	// 	// energy -- Neumann boundary condition (assumed a slip wall)
-	// 	U[2][0][i] = U[2][1][i];
-	// 	U[2][jmax-1][i] = U[2][jmax-2][i];
-	// }
+	// density -- Neumann boundary condition (no flux across boundary)
+	U[1][0] = U[2][0];
+	U[0][0] = U[1][0];
+	U[imax-2][0] = U[imax-3][0];
+	U[imax-1][0] = U[imax-2][0];
 
-	// // Left and Right Ghost Cells
-	// for (int j = 1; j < jmax-1; j++)
-	// {
-	// 	double y = (j - 0.5) / (jmax - 2);
-		// density -- Neumann boundary condition (no flux across boundary)
-		U[1][0] = U[2][0];
-		U[0][0] = U[1][0];
-		U[imax-2][0] = U[imax-3][0];
-		U[imax-1][0] = U[imax-2][0];
+	// density * velocity -- Neumann boundary condition (assumed a slip wall)
+	U[1][1] = U[2][1];
+	U[0][1] = U[1][1];
+	U[imax-2][1] = U[imax-3][1];
+	U[imax-1][1] = U[imax-2][1];
 
-		// density * velocity -- Neumann boundary condition (assumed a slip wall)
-		U[1][1] = U[2][1];
-		U[0][1] = U[1][1];
-		U[imax-2][1] = U[imax-3][1];
-		U[imax-1][1] = U[imax-2][1];
-
-		// Energy -- Neumann boundary condition (assumed a slip wall)
-		U[1][2] = U[2][2];
-		U[0][2] = U[1][2];
-		U[imax-2][2] = U[imax-3][2];
-		U[imax-1][2] = U[imax-2][2];
+	// Energy -- Neumann boundary condition (assumed a slip wall)
+	U[1][2] = U[2][2];
+	U[0][2] = U[1][2];
+	U[imax-2][2] = U[imax-3][2];
+	U[imax-1][2] = U[imax-2][2];
 }
 
-// Initializes the domain (Pressure and Velocity)
 void init(vector<vector<double> > &U)
 {
 	for (int i = 2; i < (imax-4)/2+2; i++)
@@ -182,7 +159,7 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme, int o
 {
 	vector<vector<double> > flux(imax, vector<double>(3));
 	// Steger-Warming scheme
-	if (scheme == "SW"){
+	if (scheme == "SW" || scheme == "Steger-Warming"){
 		for (int i = 2; i < imax-2; i++)
 		{
 
@@ -340,9 +317,10 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme, int o
 	return flux;
 }
 
-vector<vector<double> > EE(vector<vector<double> > &U, string scheme, int order, string limiter=" ")
+vector<vector<double> > EE(vector<vector<double> > &U, string scheme, string limiter=" ")
 {
 	vector<vector<double> > Unew(imax, vector<double>(3));
+	int order = 1;
 	vector<vector<double> > flux = getFlux(U, scheme, order, limiter);
 	flux = ScaM(dt, flux);
 	Unew = Madd(U, flux);
@@ -350,11 +328,10 @@ vector<vector<double> > EE(vector<vector<double> > &U, string scheme, int order,
 	return Unew;
 }
 
-// Two Stage Runge Kutta time advance
-vector<vector<double> > RK2(vector<vector<double> > &U, string scheme, int order, string limiter=" ")
+vector<vector<double> > RK2(vector<vector<double> > &U, string scheme, string limiter=" ")
 {
 	vector<vector<double> > Unew(imax, vector<double>(3));
-
+	int order = 2;
 	// Intermediate Step
 	vector<vector<double> > flux = getFlux(U, scheme, order, limiter);
 	flux = ScaM(dt/2.0, flux);
@@ -388,7 +365,7 @@ int main()
 	for (int n = 0; n < 40; n++)
 	{
 		cout << n+1 << endl;
-		U = RK2(U, "Roe", 2, "vanleer");
+		U = RK2(U, "Roe", "vanleer");
 
 	}
 	cout << "Unew:" << endl;
@@ -397,13 +374,17 @@ int main()
 	U = transpose(U);
 
 	vector<double> P(imax-4);
+	vector<double> T(imax-4);
 	for (int i = 0; i < imax-4; i++)
 	{
 		P[i] = pressure(U[i+2]);
+		T[i] = temperature(U[i+2]);
 	}
 
 	string Pname = "P.dat";
 	vec1D2File(Pname, P);
+	string Tname = "T.dat";
+	vec1D2File(Tname, T);
 
 
 	string Dname = "data.dat";
