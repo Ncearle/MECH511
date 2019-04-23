@@ -21,6 +21,7 @@ void zeroVec(vector<double> &V); // Resets a vector to zero vector
 void zeroMat(vector<vector<double> > &M); // Resets a matrix to zero matrix
 
 double MaxV(vector<double> &V);	// Returns the maximum value of a vector
+double MinV(vector<double> &V);	// Returns the minimum value of a vector
 double MagV(vector<double> &V);	// Returns the length of a vector
 double dot(vector<double> &a, vector<double> &b); // Returns the dot product of two vectors
 
@@ -171,6 +172,17 @@ double MaxV(vector<double> &V){
 	for (int i = 0; i < V.size(); i++)
 	{
 		if (V[i] > M)
+		{
+			M = V[i];
+		}
+	}
+	return M;
+}
+double MinV(vector<double> &V){
+	double M = V[0];
+	for (int i = 0; i < V.size(); i++)
+	{
+		if (V[i] < M)
 		{
 			M = V[i];
 		}

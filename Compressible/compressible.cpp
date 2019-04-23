@@ -1,12 +1,11 @@
 //=================================================
-// Source file for Navier-Stokes Equation
+// Source file for Compressible 1D Sod Problem
 //=================================================
 #include "constant.h"
 #include "print_funcs.h"
 #include "error_funcs.h"
 #include "vecmat_funcs.h"
 #include "phys_funcs.h"
-#include "blocktri_vector.h"
 
 // Given domain and velocities, sets and updates the bounary conditions
 void ghost(vector<vector<double> > &U)
@@ -155,16 +154,16 @@ vector<vector<double> > bigLamb(vector<double> &Uplus, vector<double> &Uminus, s
 		double u = uVel(Uplus);
 		double c = speedofsound(Uplus);
 		if (littleLamb[0] > 0.0){bigLamb[0][0] = 0.5*(littleLamb[0] + abs(littleLamb[0]));}
-		else if (littleLamb[1] > 0.0){bigLamb[1][1] = 0.5*(littleLamb[1] + abs(littleLamb[1]));}
-		else if (littleLamb[2] > 0.0){bigLamb[2][2] = 0.5*(littleLamb[2] + abs(littleLamb[2]));}
+		if (littleLamb[1] > 0.0){bigLamb[1][1] = 0.5*(littleLamb[1] + abs(littleLamb[1]));}
+		if (littleLamb[2] > 0.0){bigLamb[2][2] = 0.5*(littleLamb[2] + abs(littleLamb[2]));}
 	}
 	else if (PM == "-"){
 		vector<double> littleLamb = eig(Uplus, Uminus);
 		double u = uVel(Uminus);
 		double c = speedofsound(Uminus);
 		if (littleLamb[0] < 0.0){bigLamb[0][0] = 0.5*(littleLamb[0] - abs(littleLamb[0]));}
-		else if (littleLamb[1] < 0.0){bigLamb[1][1] = 0.5*(littleLamb[1] - abs(littleLamb[1]));}
-		else if (littleLamb[2] < 0.0){bigLamb[2][2] = 0.5*(littleLamb[2] - abs(littleLamb[2]));}
+		if (littleLamb[1] < 0.0){bigLamb[1][1] = 0.5*(littleLamb[1] - abs(littleLamb[1]));}
+		if (littleLamb[2] < 0.0){bigLamb[2][2] = 0.5*(littleLamb[2] - abs(littleLamb[2]));}
 	}
 	return bigLamb;
 }
@@ -179,7 +178,7 @@ vector<vector<double> > absBigLamb(vector<double> &Uplus, vector<double> &Uminus
 	return bigLamb;
 }
 
-vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme)
+vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme, int order, string limiter=" ")
 {
 	vector<vector<double> > flux(imax, vector<double>(3));
 	// Steger-Warming scheme
@@ -192,8 +191,12 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme)
 			for (int k = 0; k <= 1; k++)
 			{
 				// Start with left interface F_i-1/2
-				vector<double> Uplus = getPlus(U, i-1+k);
-				vector<double> Uminus = getMinus(U, i+k);
+				vector<double> Uplus = getPlus(U, i-1+k, 2, limiter);
+				vector<double> Uminus = getMinus(U, i+k, 2, limiter);
+
+				// if (i == 5){
+				// printVec(Uplus);
+				// printVec(Uminus);}
 
 				//F+
 				vector<vector<double> > UoverV = jac(Uplus);
@@ -208,7 +211,7 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme)
 				Aplus = MM(Aplus, VoverU);
 				vector<double> Fplus = MVM(Aplus, Uplus);
 
-				// if (i == 6){
+				// if (i == 5){
 				// printVec2D(UoverV);
 				// printVec2D(XR);
 				// printVec2D(Lambda);
@@ -230,7 +233,7 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme)
 				Aminus = MM(Aminus, VoverU);
 				vector<double> Fminus = MVM(Aminus, Uminus);
 
-				// if (i == 6){
+				// if (i == 5){
 				// printVec2D(UoverV);
 				// printVec2D(XR);
 				// printVec2D(Lambda);
@@ -260,10 +263,17 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme)
 			vector<double> Fplushalf(3);
 
 			for (int k = 0; k <= 1; k++){
-				vector<double> Uplus = getPlus(U, i-1+k);
-				vector<double> Uminus = getMinus(U, i+k);
-				vector<double> Fplus = getPlus(F, i-1+k);
-				vector<double> Fminus = getMinus(F, i+k);
+				vector<double> Uplus = getPlus(U, i-1+k, 2, limiter);
+				vector<double> Uminus = getMinus(U, i+k, 2, limiter);
+				vector<double> Fplus = getPlus(F, i-1+k, 2, limiter);
+				vector<double> Fminus = getMinus(F, i+k, 2, limiter);
+
+				// if (i == 6){
+				// 	printVec(Uplus);
+				// 	printVec(Uminus);
+				// 	printVec(Fplus);
+				// 	printVec(Fminus);
+				// }
 
 				// Roe average
 				double rightRho = density(Uminus);
@@ -277,10 +287,14 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme)
 
 				double rhoTilde = sqrt(rightRho*leftRho);
 				double uTilde = (sqrt(rightRho)*rightu + sqrt(leftRho)*leftu)/(sqrt(rightRho)*sqrt(leftRho));
-				double hTilde = (sqrt(rightRho)*rightH + sqrt(leftRho)*leftH)/(sqrt(rightRho)*sqrt(leftRho));
+				double hTilde = (sqrt(rightRho)*rightH + sqrt(leftRho)*leftH)/(sqrt(rightRho)+sqrt(leftRho));
 				double PTilde = (hTilde - 0.5*uTilde*uTilde)*(gam-1)*rhoTilde/gam;
 				double ETilde = PTilde/(gam-1) + 0.5*rhoTilde*uTilde*uTilde;
 				vector<double> UTilde {rhoTilde, rhoTilde*uTilde, ETilde};
+
+				// if(i == 6){
+				// cout << "rhoTilde: " << rhoTilde << "\tuTilde: " << uTilde << "\thTilde: " << hTilde << "\tPtilde: " << PTilde << "\tETilde: " << ETilde << endl;
+				// printVec(UTilde);}
 
 				vector<vector<double> > UoverV = jac(UTilde);
 				vector<vector<double> > XR = Xmatrix(UTilde, "R");
@@ -293,13 +307,13 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme)
 				ATilde = MM(ATilde, XL);
 				ATilde = MM(ATilde, VoverU);
 
-				if (i == 6){
-				printVec2D(UoverV);
-				printVec2D(XR);
-				printVec2D(Lambda);
-				printVec2D(XL);
-				printVec2D(VoverU);
-				printVec2D(ATilde);}
+				// if (i == 6){
+				// printVec2D(UoverV);
+				// printVec2D(XR);
+				// printVec2D(Lambda);
+				// printVec2D(XL);
+				// printVec2D(VoverU);
+				// printVec2D(ATilde);}
 
 
 				vector<double> term1 = Vadd(Fplus, Fminus);
@@ -326,14 +340,10 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme)
 	return flux;
 }
 
-vector<vector<double> > EE(vector<vector<double> > &U, string scheme)
+vector<vector<double> > EE(vector<vector<double> > &U, string scheme, int order, string limiter=" ")
 {
 	vector<vector<double> > Unew(imax, vector<double>(3));
-	vector<vector<double> > flux = getFlux(U, scheme);
-	cout << "Flux:" << endl;
-	flux = transpose(flux);
-	printVec2D(flux);
-	flux = transpose(flux);
+	vector<vector<double> > flux = getFlux(U, scheme, order, limiter);
 	flux = ScaM(dt, flux);
 	Unew = Madd(U, flux);
 	ghost(Unew);
@@ -341,52 +351,21 @@ vector<vector<double> > EE(vector<vector<double> > &U, string scheme)
 }
 
 // Two Stage Runge Kutta time advance
-vector<vector<double> > RK2(vector<vector<double> > &U, string scheme)
+vector<vector<double> > RK2(vector<vector<double> > &U, string scheme, int order, string limiter=" ")
 {
 	vector<vector<double> > Unew(imax, vector<double>(3));
 
 	// Intermediate Step
-	// cout << "Intermediate step:" << endl;
-	vector<vector<double> > flux = getFlux(U, scheme);
-	// flux = transpose(flux);
-	// cout << "flux:"<< endl;
-	// printVec2D(flux);
-	// flux = transpose(flux);
-
+	vector<vector<double> > flux = getFlux(U, scheme, order, limiter);
 	flux = ScaM(dt/2.0, flux);
-	// flux = transpose(flux);
-	// cout << "flux*dt/2:"<< endl;
-	// printVec2D(flux);
-	// flux = transpose(flux);
-
 	Unew = Madd(U, flux);
 	ghost(Unew);
-	// Unew = transpose(Unew);
-	// cout << "Unew:"<< endl;
-	// printVec2D(Unew);
-	// Unew = transpose(Unew);
-
 
 	// Full Step
-	// cout << "Full step:" << endl;
-	flux = getFlux(Unew, scheme);
-	// flux = transpose(flux);
-	// cout << "flux:"<< endl;
-	// printVec2D(flux);
-	// flux = transpose(flux);
-
+	flux = getFlux(Unew, scheme, order, limiter);
 	flux = ScaM(dt, flux);
-	// flux = transpose(flux);
-	// cout << "flux*dt:"<< endl;
-	// printVec2D(flux);
-	// flux = transpose(flux);
-
 	Unew = Madd(U, flux);
 	ghost(Unew);
-	// Unew = transpose(Unew);
-	// cout << "Unew:"<< endl;
-	// printVec2D(Unew);
-	// Unew = transpose(Unew);
 
 	return Unew;
 }
@@ -398,24 +377,33 @@ int main()
 	U = transpose(U);
 	printVec2D(U);
 	U = transpose(U);
-	vector<vector<double> > FI = getFlux(U, "Roe");
-	FI = transpose(FI);
-	printVec2D(FI);
-	FI = transpose(FI);
+	// vector<vector<double> > FI = getFlux(U, "Roe");
+	// FI = transpose(FI);
+	// printVec2D(FI);
+	// FI = transpose(FI);
 
-	// double t_fin = 0.15;
-	// int t_steps = t_fin/dt+1;
-	//
-	// for (int n = 0; n < 10; n++)
-	// {
-	// 	cout << n+1 << endl;
-	// 	U = EE(U, "Roe");
-	// 	cout << "Unew:" << endl;
-	// 	U = transpose(U);
-	// 	printVec2D(U);
-	// 	U = transpose(U);
-	//
-	// }
+	double t_fin = 0.15;
+	int t_steps = t_fin/dt+1;
+
+	for (int n = 0; n < 40; n++)
+	{
+		cout << n+1 << endl;
+		U = RK2(U, "Roe", 2, "vanleer");
+
+	}
+	cout << "Unew:" << endl;
+	U = transpose(U);
+	printVec2D(U);
+	U = transpose(U);
+
+	vector<double> P(imax-4);
+	for (int i = 0; i < imax-4; i++)
+	{
+		P[i] = pressure(U[i+2]);
+	}
+
+	string Pname = "P.dat";
+	vec1D2File(Pname, P);
 
 
 	string Dname = "data.dat";

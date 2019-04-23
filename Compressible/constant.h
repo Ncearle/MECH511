@@ -24,7 +24,7 @@ using namespace std::chrono;
 // using namespace xt;
 
 // Domain Constants
-extern constexpr int imax = 14;
+extern constexpr int imax = 104;
 extern constexpr int jmax = 6;
 
 extern constexpr double xmax = 1.0;
@@ -36,16 +36,16 @@ extern constexpr double dt = 0.005;
 
 // Constants
 extern constexpr double pi = M_PI;	// Pi
-extern constexpr double Rair = 287.058; // Specific gas constant for air
+extern constexpr double Rair = 1.0; // 287.058; // Specific gas constant for air
 extern constexpr double Cp = 1.006; // Specific heat constant for air
 extern constexpr double Cv = 0.7171; // Specific heat constant for air
 extern constexpr double gam = 1.4; //Cp/Cv;
 
-extern constexpr double rhoL = 1.01;		// Initial left side density
+extern constexpr double rhoL = 8.0;		// Initial left side density
 extern constexpr double rhoR = 1.0;		// Initial right side density
 extern constexpr double uL = 0.0;		// Initial left side velocity
 extern constexpr double uR = 0.0;		// Initial right side velocity
-extern constexpr double PL = 1.0;		// Initial left side pressure
+extern constexpr double PL = 10.0;		// Initial left side pressure
 extern constexpr double PR = 1.0;		// Initial right side pressure
 
 extern constexpr int p = 8; // Precision for printing
