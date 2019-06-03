@@ -3,7 +3,6 @@
 //=================================================
 #include "constant.h"
 #include "print_funcs.h"
-#include "error_funcs.h"
 #include "vecmat_funcs.h"
 #include "phys_funcs.h"
 
@@ -126,21 +125,22 @@ vector<double> eig(vector<double> &Uplus, vector<double> &Uminus)
 vector<vector<double> > bigLamb(vector<double> &Uplus, vector<double> &Uminus, string PM)		// input i & PM = "+" for right side, i+1 & PM = "-" for left side
 {
 	vector<vector<double> > bigLamb(3, vector<double>(3));
+	double eps = pow(10,-8);
 	if (PM == "+"){
 		vector<double> littleLamb = eig(Uplus, Uminus);
 		double u = uVel(Uplus);
 		double c = speedofsound(Uplus);
-		if (littleLamb[0] > 0.0){bigLamb[0][0] = 0.5*(littleLamb[0] + abs(littleLamb[0]));}
-		if (littleLamb[1] > 0.0){bigLamb[1][1] = 0.5*(littleLamb[1] + abs(littleLamb[1]));}
-		if (littleLamb[2] > 0.0){bigLamb[2][2] = 0.5*(littleLamb[2] + abs(littleLamb[2]));}
+		if (littleLamb[0] > 0.0){bigLamb[0][0] = 0.5*(littleLamb[0] + sqrt(pow(littleLamb[0],2)+eps));}
+		if (littleLamb[1] > 0.0){bigLamb[1][1] = 0.5*(littleLamb[1] + sqrt(pow(littleLamb[1],2)+eps));}
+		if (littleLamb[2] > 0.0){bigLamb[2][2] = 0.5*(littleLamb[2] + sqrt(pow(littleLamb[2],2)+eps));}
 	}
 	else if (PM == "-"){
 		vector<double> littleLamb = eig(Uplus, Uminus);
 		double u = uVel(Uminus);
 		double c = speedofsound(Uminus);
-		if (littleLamb[0] < 0.0){bigLamb[0][0] = 0.5*(littleLamb[0] - abs(littleLamb[0]));}
-		if (littleLamb[1] < 0.0){bigLamb[1][1] = 0.5*(littleLamb[1] - abs(littleLamb[1]));}
-		if (littleLamb[2] < 0.0){bigLamb[2][2] = 0.5*(littleLamb[2] - abs(littleLamb[2]));}
+		if (littleLamb[0] < 0.0){bigLamb[0][0] = 0.5*(littleLamb[0] - sqrt(pow(littleLamb[0],2)+eps));}
+		if (littleLamb[1] < 0.0){bigLamb[1][1] = 0.5*(littleLamb[1] - sqrt(pow(littleLamb[1],2)+eps));}
+		if (littleLamb[2] < 0.0){bigLamb[2][2] = 0.5*(littleLamb[2] - sqrt(pow(littleLamb[2],2)+eps));}
 	}
 	return bigLamb;
 }
@@ -148,9 +148,10 @@ vector<vector<double> > bigLamb(vector<double> &Uplus, vector<double> &Uminus, s
 vector<vector<double> > absBigLamb(vector<double> &Uplus, vector<double> &Uminus)
 {
 	vector<vector<double> > bigLamb(3, vector<double>(3));
+	double eps = pow(10,-8);
 	vector<double> littleLamb = eig(Uplus, Uminus);
 	for (int i = 0; i < 3; i++){
-		bigLamb[i][i] = abs(littleLamb[i]);
+		bigLamb[i][i] = sqrt(pow(littleLamb[i],2) + eps);
 	}
 	return bigLamb;
 }
@@ -171,10 +172,6 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme, int o
 				vector<double> Uplus = getPlus(U, i-1+k, 2, limiter);
 				vector<double> Uminus = getMinus(U, i+k, 2, limiter);
 
-				// if (i == 5){
-				// printVec(Uplus);
-				// printVec(Uminus);}
-
 				//F+
 				vector<vector<double> > UoverV = jac(Uplus);
 				vector<vector<double> > XR = Xmatrix(Uplus, "R");
@@ -188,15 +185,6 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme, int o
 				Aplus = MM(Aplus, VoverU);
 				vector<double> Fplus = MVM(Aplus, Uplus);
 
-				// if (i == 5){
-				// printVec2D(UoverV);
-				// printVec2D(XR);
-				// printVec2D(Lambda);
-				// printVec2D(XL);
-				// printVec2D(VoverU);
-				// printVec2D(Aplus);
-				// printVec(Fplus);}
-
 				// F-
 				UoverV = jac(Uminus);
 				XR = Xmatrix(Uminus, "R");
@@ -209,15 +197,6 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme, int o
 				Aminus = MM(Aminus, XL);
 				Aminus = MM(Aminus, VoverU);
 				vector<double> Fminus = MVM(Aminus, Uminus);
-
-				// if (i == 5){
-				// printVec2D(UoverV);
-				// printVec2D(XR);
-				// printVec2D(Lambda);
-				// printVec2D(XL);
-				// printVec2D(VoverU);
-				// printVec2D(Aminus);
-				// printVec(Fminus);}
 
 				if (k == 0){
 					Fminushalf = Vadd(Fplus, Fminus);
@@ -245,13 +224,6 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme, int o
 				vector<double> Fplus = getPlus(F, i-1+k, 2, limiter);
 				vector<double> Fminus = getMinus(F, i+k, 2, limiter);
 
-				// if (i == 6){
-				// 	printVec(Uplus);
-				// 	printVec(Uminus);
-				// 	printVec(Fplus);
-				// 	printVec(Fminus);
-				// }
-
 				// Roe average
 				double rightRho = density(Uminus);
 				double leftRho = density(Uplus);
@@ -269,10 +241,6 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme, int o
 				double ETilde = PTilde/(gam-1) + 0.5*rhoTilde*uTilde*uTilde;
 				vector<double> UTilde {rhoTilde, rhoTilde*uTilde, ETilde};
 
-				// if(i == 6){
-				// cout << "rhoTilde: " << rhoTilde << "\tuTilde: " << uTilde << "\thTilde: " << hTilde << "\tPtilde: " << PTilde << "\tETilde: " << ETilde << endl;
-				// printVec(UTilde);}
-
 				vector<vector<double> > UoverV = jac(UTilde);
 				vector<vector<double> > XR = Xmatrix(UTilde, "R");
 				vector<vector<double> > Lambda = absBigLamb(Uplus, Uminus);
@@ -283,15 +251,6 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme, int o
 				ATilde = MM(ATilde, Lambda);
 				ATilde = MM(ATilde, XL);
 				ATilde = MM(ATilde, VoverU);
-
-				// if (i == 6){
-				// printVec2D(UoverV);
-				// printVec2D(XR);
-				// printVec2D(Lambda);
-				// printVec2D(XL);
-				// printVec2D(VoverU);
-				// printVec2D(ATilde);}
-
 
 				vector<double> term1 = Vadd(Fplus, Fminus);
 				term1 = ScaV(0.5, term1);
@@ -317,11 +276,11 @@ vector<vector<double> > getFlux(vector<vector<double> > &U, string scheme, int o
 	return flux;
 }
 
-vector<vector<double> > EE(vector<vector<double> > &U, string scheme, string limiter=" ")
+vector<vector<double> > EE(vector<vector<double> > &U, string scheme)
 {
 	vector<vector<double> > Unew(imax, vector<double>(3));
 	int order = 1;
-	vector<vector<double> > flux = getFlux(U, scheme, order, limiter);
+	vector<vector<double> > flux = getFlux(U, scheme, order);
 	flux = ScaM(dt, flux);
 	Unew = Madd(U, flux);
 	ghost(Unew);
@@ -351,21 +310,14 @@ int main()
 {
 	vector<vector<double> > U(imax, vector<double>(3));
 	init(U);
-	U = transpose(U);
-	printVec2D(U);
-	U = transpose(U);
-	// vector<vector<double> > FI = getFlux(U, "Roe");
-	// FI = transpose(FI);
-	// printVec2D(FI);
-	// FI = transpose(FI);
 
 	double t_fin = 0.15;
 	int t_steps = t_fin/dt+1;
 
-	for (int n = 0; n < 40; n++)
+	for (int n = 0; n < t_steps; n++)
 	{
 		cout << n+1 << endl;
-		U = RK2(U, "Roe", "vanleer");
+		U = RK2(U, "Roe", "minmod");
 
 	}
 	cout << "Unew:" << endl;
@@ -375,17 +327,24 @@ int main()
 
 	vector<double> P(imax-4);
 	vector<double> T(imax-4);
+	vector<double> rho(imax-4);
+	vector<double> u(imax-4);
 	for (int i = 0; i < imax-4; i++)
 	{
 		P[i] = pressure(U[i+2]);
 		T[i] = temperature(U[i+2]);
+		rho[i] = density(U[i+2]);
+		u[i] = uVel(U[i+2]);
 	}
 
 	string Pname = "P.dat";
 	vec1D2File(Pname, P);
 	string Tname = "T.dat";
 	vec1D2File(Tname, T);
-
+	string rhoname = "rho.dat";
+	vec1D2File(rhoname, rho);
+	string uname = "u.dat";
+	vec1D2File(uname, u);
 
 	string Dname = "data.dat";
 	vec2D2File(Dname, U);

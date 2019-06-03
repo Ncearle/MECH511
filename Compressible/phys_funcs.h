@@ -13,7 +13,7 @@ double uVel(vector<double> &Upm);
 double density(vector<double> &Upm);
 double temperature(vector<double> &Upm);
 double pressure (vector<double> &Upm);
-vector<double> fluxLimiter(vector<double> &r, string scheme);
+vector<double> fluxLimiter(vector<double> &r, string limiter);
 vector<double> getPlus(vector<vector<double> > &U, int i, int order, string scheme);
 vector<double> getMinus(vector<vector<double> > &U, int i, int order, string scheme);
 
@@ -39,23 +39,31 @@ double pressure (vector<double> &Upm){
   double P = (Upm[2]-0.5*Upm[0]*u*u)*(gam-1);
   return P;
 }
-vector<double> fluxLimiter(vector<double> &r, string scheme){
-  vector<double> FL(3);
-  for (int k = 0; k < 3; k++){
-    if (scheme == "minmod"){
-      vector<double> temp{1, r[k]};
-      double x = MinV(temp);
-      temp = {0, x};
-      FL[k] = MaxV(temp);
+vector<double> fluxLimiter(vector<double> &r, string limiter){
+    vector<double> FL(3);
+    for (int k = 0; k < 3; k++){
+      if (limiter == "minmod"){
+        vector<double> temp = {1, r[k]};
+        double x = MinV(temp);
+        temp = {0, x};
+        FL[k] = MaxV(temp);
+      }
+      else if (limiter == "vanleer"){
+        FL[k] = (r[k] + abs(r[k]))/(1 + abs(r[k]));
+      }
+      else if (limiter == "superbee"){
+        vector<double> temp = {r[k], 2};
+        double x1 = MinV(temp);
+        temp = {2*r[k], 1};
+        double x2 = MinV(temp);
+        temp = {0, x2, x1};
+        FL[k] = MaxV(temp);
+      }
     }
-    else if (scheme == "vanleer"){
-      FL[k] = (r[k] + abs(r[k]))/(1 + abs(r[k]));
-    }
-  }
-  return FL;
+    return FL;
 }
 
-vector<double> getPlus(vector<vector<double> > &U, int i, int order, string scheme=" "){
+vector<double> getPlus(vector<vector<double> > &U, int i, int order, string limiter=" "){
   vector<double> Uplus(3);
   vector<double> r(3);
   switch (order) {
@@ -69,7 +77,7 @@ vector<double> getPlus(vector<vector<double> > &U, int i, int order, string sche
         r[k] = (U[i+1][k] - U[i][k])/(U[i][k] - U[i-1][k]);
         if (U[i][k] - U[i-1][k] == 0){r[k] = pow(10, 9);}
       }
-      vector<double> FL = fluxLimiter(r, scheme);
+      vector<double> FL = fluxLimiter(r, limiter);
       for (int k = 0; k < 3; k++)
       {
         Uplus[k] = U[i][k] + 0.5*FL[k]*(U[i][k] - U[i-1][k]);
@@ -77,7 +85,7 @@ vector<double> getPlus(vector<vector<double> > &U, int i, int order, string sche
   }
   return Uplus;
 }
-vector<double> getMinus(vector<vector<double> > &U, int i, int order, string scheme=" "){
+vector<double> getMinus(vector<vector<double> > &U, int i, int order, string limiter=" "){
   vector<double> Uminus(3);
   vector<double> r(3);
   switch (order) {
@@ -91,7 +99,7 @@ vector<double> getMinus(vector<vector<double> > &U, int i, int order, string sch
         r[k] = (U[i][k] - U[i-1][k])/(U[i+1][k] - U[i][k]);
         if (U[i+1][k] - U[i][k] == 0){r[k] = pow(10, 9);}
       }
-      vector<double> FL = fluxLimiter(r, scheme);
+      vector<double> FL = fluxLimiter(r, limiter);
       for (int k = 0; k < 3; k++)
       {
         Uminus[k] = U[i][k] + 0.5*FL[k]*(U[i+1][k] - U[i][k]);
